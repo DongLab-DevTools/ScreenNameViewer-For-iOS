@@ -6,53 +6,80 @@
 import SwiftUI
 import ScreenNameViewer
 
-enum DemoRoute: Hashable {
-    case detail(id: Int)
-    case settings
-}
-
 struct ContentView: View {
 
     @State private var path: [DemoRoute] = []
 
     var body: some View {
         NavigationStack(path: $path) {
-            HomeView()
-                .navigationDestination(for: DemoRoute.self) { route in
-                    switch route {
-                    case .detail(let id): DetailView(id: id)
-                    case .settings:       SettingsView()
-                    }
+            List {
+                Section("SwiftUI") {
+                    row("Basic NavigationStack",   icon: "arrow.right.circle",       value: .swiftUIBasicNavigation)
+                    row("Deep NavigationStack",    icon: "square.stack.3d.up",       value: .swiftUIDeepNavigation)
+                    row("Sheet",                   icon: "rectangle.portrait.bottomthird.inset.filled", value: .swiftUISheet)
+                    row("Full-Screen Cover",       icon: "rectangle.fill.on.rectangle.fill",            value: .swiftUIFullScreenCover)
+                    row("TabView + Tabs",          icon: "square.grid.2x2",          value: .swiftUITabbed)
                 }
+
+                Section("UIKit") {
+                    row("UINavigationController",  icon: "chevron.right.square",     value: .uikitNavigationController)
+                    row("UITabBarController",      icon: "rectangle.bottomthird.inset.filled",          value: .uikitTabBarController)
+                    row("Modal Presentation",      icon: "rectangle.center.inset.filled",               value: .uikitModalPresentation)
+                    row("Container ViewController", icon: "square.split.2x1",        value: .uikitContainerViewController)
+                }
+            }
+            .navigationTitle("ScreenNameViewer")
+            .navigationDestination(for: DemoRoute.self) { route in
+                destination(for: route)
+            }
         }
-        // One-liner that mirrors Compose's `ScreenNameTracker(navController)`.
         .trackScreenName(path: path)
     }
-}
 
-private struct HomeView: View {
-    var body: some View {
-        List {
-            NavigationLink("Detail #1", value: DemoRoute.detail(id: 1))
-            NavigationLink("Detail #2", value: DemoRoute.detail(id: 2))
-            NavigationLink("Settings",  value: DemoRoute.settings)
+    private func row(_ title: String, icon: String, value: DemoRoute) -> some View {
+        NavigationLink(value: value) {
+            Label(title, systemImage: icon)
         }
-        .navigationTitle("Home")
     }
-}
 
-private struct DetailView: View {
-    let id: Int
-    var body: some View {
-        Text("Detail #\(id)")
-            .navigationTitle("Detail \(id)")
-    }
-}
+    @ViewBuilder
+    private func destination(for route: DemoRoute) -> some View {
+        switch route {
+        case .swiftUIBasicNavigation:
+            BasicNavigationDemo()
+        case .swiftUIDeepNavigation:
+            DeepNavigationDemo()
+        case .swiftUISheet:
+            SheetDemo()
+        case .swiftUIFullScreenCover:
+            FullScreenCoverDemo()
+        case .swiftUITabbed:
+            TabbedDemo()
 
-private struct SettingsView: View {
-    var body: some View {
-        Text("Settings")
-            .navigationTitle("Settings")
+        case .swiftUIBasicDetail(let id):
+            BasicDetailScreen(id: id)
+        case .swiftUIDeepLevel(let level):
+            DeepLevelScreen(level: level)
+
+        case .uikitNavigationController:
+            UIKitNavigationDemo()
+                .ignoresSafeArea()
+                .navigationTitle("UINavigationController")
+                .navigationBarTitleDisplayMode(.inline)
+        case .uikitTabBarController:
+            UIKitTabBarDemo()
+                .ignoresSafeArea(edges: .bottom)
+                .navigationTitle("UITabBarController")
+                .navigationBarTitleDisplayMode(.inline)
+        case .uikitModalPresentation:
+            UIKitModalDemo()
+                .navigationTitle("Modal Presentation")
+                .navigationBarTitleDisplayMode(.inline)
+        case .uikitContainerViewController:
+            UIKitContainerDemo()
+                .navigationTitle("Container ViewController")
+                .navigationBarTitleDisplayMode(.inline)
+        }
     }
 }
 
