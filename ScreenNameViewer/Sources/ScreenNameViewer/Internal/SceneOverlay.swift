@@ -15,12 +15,20 @@ final class SceneOverlay {
     }
 
     func update(viewController: UIViewController?, routeName: String?, configuration: Configuration) {
-        let vcName = viewController.flatMap { VCNameFormatter.displayName(for: $0) }
+        let vcNames = viewController.flatMap { VCNameFormatter.names(for: $0) }
         window?.update(
-            viewControllerName: vcName,
+            vcDisplay: vcNames?.display,
+            vcFull: vcNames?.full,
             routeName: routeName,
             configuration: configuration
         )
+    }
+
+    /// 앱 윈도우 좌표의 탭 위치를 받아 라벨 영역인지 검사 후 토스트 표시
+    func handlePotentialLabelTap(at point: CGPoint, fromWindow appWindow: UIWindow) {
+        guard let overlayWindow = window else { return }
+        let overlayPoint = appWindow.convert(point, to: overlayWindow)
+        overlayWindow.handlePotentialLabelTap(at: overlayPoint)
     }
 
     func tearDown() {

@@ -6,6 +6,12 @@ final class OverlayViewController: UIViewController {
 
     private let vcLabel = PaddedLabel()
     private let routeLabel = PaddedLabel()
+    private let toastLabel = ToastLabel()
+
+    // 탭 시 토스트로 표시할 풀네임 보관
+    private var vcFullName: String?
+    private var routeFullName: String?
+    private var toastDismissWorkItem: DispatchWorkItem?
 
     private var verticalConstraints: [NSLayoutConstraint] = []
     private var lastAppliedVerticalPosition: Configuration.VerticalPosition?
@@ -21,11 +27,14 @@ final class OverlayViewController: UIViewController {
 
         for label in [vcLabel, routeLabel] {
             label.translatesAutoresizingMaskIntoConstraints = false
-            label.isUserInteractionEnabled = false
             label.setContentHuggingPriority(.defaultHigh, for: .horizontal)
             label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
             view.addSubview(label)
         }
+
+        toastLabel.translatesAutoresizingMaskIntoConstraints = false
+        toastLabel.alpha = 0
+        view.addSubview(toastLabel)
 
         let g = view.safeAreaLayoutGuide
 
@@ -35,13 +44,22 @@ final class OverlayViewController: UIViewController {
             routeLabel.trailingAnchor.constraint(equalTo: g.trailingAnchor, constant: -8),
             // 두 라벨 겹침 방지 — 충돌 직전에 어느 한 쪽 먼저 truncate
             vcLabel.trailingAnchor.constraint(lessThanOrEqualTo: routeLabel.leadingAnchor, constant: -8),
+
+            // 토스트 — 하단 중앙 고정, 좌우 16 패딩
+            toastLabel.centerXAnchor.constraint(equalTo: g.centerXAnchor),
+            toastLabel.bottomAnchor.constraint(equalTo: g.bottomAnchor, constant: -32),
+            toastLabel.leadingAnchor.constraint(greaterThanOrEqualTo: g.leadingAnchor, constant: 16),
+            toastLabel.trailingAnchor.constraint(lessThanOrEqualTo: g.trailingAnchor, constant: -16),
         ])
     }
 
-    func update(viewControllerName: String?, routeName: String?, configuration: Configuration) {
+    func update(vcDisplay: String?, vcFull: String?, routeName: String?, configuration: Configuration) {
         applyVerticalPositionIfNeeded(configuration.verticalPosition)
 
-        if configuration.viewController.enabled, let name = viewControllerName, !name.isEmpty {
+        vcFullName = vcFull
+        routeFullName = routeName
+
+        if configuration.viewController.enabled, let name = vcDisplay, !name.isEmpty {
             vcLabel.apply(text: name, style: configuration.viewController)
             vcLabel.isHidden = false
         } else {
@@ -54,6 +72,36 @@ final class OverlayViewController: UIViewController {
         } else {
             routeLabel.isHidden = true
         }
+    }
+
+    /// 윈도우 좌표의 탭 위치 — 라벨 영역 안이면 해당 풀네임을 토스트로 표시
+    func handlePotentialLabelTap(at pointInWindow: CGPoint) {
+        let pointInView = view.convert(pointInWindow, from: nil)
+        if !vcLabel.isHidden, let name = vcFullName, vcLabel.frame.contains(pointInView) {
+            showToast(name)
+            return
+        }
+        if !routeLabel.isHidden, let name = routeFullName, routeLabel.frame.contains(pointInView) {
+            showToast(name)
+        }
+    }
+
+    private func showToast(_ text: String) {
+        toastDismissWorkItem?.cancel()
+
+        toastLabel.text = text
+
+        UIView.animate(withDuration: 0.18) {
+            self.toastLabel.alpha = 1
+        }
+
+        let dismiss = DispatchWorkItem { [weak self] in
+            UIView.animate(withDuration: 0.3) {
+                self?.toastLabel.alpha = 0
+            }
+        }
+        toastDismissWorkItem = dismiss
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0, execute: dismiss)
     }
 
     private func applyVerticalPositionIfNeeded(_ vertical: Configuration.VerticalPosition) {
@@ -82,6 +130,7 @@ final class OverlayViewController: UIViewController {
 
 @MainActor
 private final class PassthroughView: UIView {
+    /// 모든 영역 미터치 — 오버레이 윈도우의 hitTest와 함께 완전 통과
     override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
         return false
     }
@@ -107,9 +156,40 @@ private final class PaddedLabel: UILabel {
         self.clipsToBounds = true
         self.numberOfLines = 1
         self.lineBreakMode = .byTruncatingMiddle
-        self.isUserInteractionEnabled = false
         self.invalidateIntrinsicContentSize()
     }
+
+    override func drawText(in rect: CGRect) {
+        super.drawText(in: rect.inset(by: contentInsets))
+    }
+
+    override var intrinsicContentSize: CGSize {
+        let s = super.intrinsicContentSize
+        return CGSize(
+            width: s.width + contentInsets.left + contentInsets.right,
+            height: s.height + contentInsets.top + contentInsets.bottom
+        )
+    }
+}
+
+@MainActor
+private final class ToastLabel: UILabel {
+
+    private let contentInsets = UIEdgeInsets(top: 8, left: 12, bottom: 8, right: 12)
+
+    init() {
+        super.init(frame: .zero)
+        textColor = .white
+        backgroundColor = UIColor.black.withAlphaComponent(0.85)
+        font = .systemFont(ofSize: 13, weight: .medium)
+        textAlignment = .center
+        numberOfLines = 0
+        layer.cornerRadius = 8
+        clipsToBounds = true
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError() }
 
     override func drawText(in rect: CGRect) {
         super.drawText(in: rect.inset(by: contentInsets))

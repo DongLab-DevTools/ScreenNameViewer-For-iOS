@@ -19,16 +19,22 @@ final class OverlayWindow: UIWindow {
         fatalError("init(coder:) is not supported")
     }
 
-    func update(viewControllerName: String?, routeName: String?, configuration: Configuration) {
+    func update(vcDisplay: String?, vcFull: String?, routeName: String?, configuration: Configuration) {
         overlayVC.update(
-            viewControllerName: viewControllerName,
+            vcDisplay: vcDisplay,
+            vcFull: vcFull,
             routeName: routeName,
             configuration: configuration
         )
     }
 
-    // 이중 안전장치 — `isUserInteractionEnabled = false`만으로 충분하나 어떠한
-    // 터치도 절대 이 윈도우에 도달하지 않도록 hitTest에서도 nil 반환
+    /// 오버레이 윈도우 좌표의 탭 위치를 OverlayViewController에 전달 —
+    /// OverlayManager가 앱 윈도우 제스처에서 받은 탭을 여기로 라우팅
+    func handlePotentialLabelTap(at point: CGPoint) {
+        overlayVC.handlePotentialLabelTap(at: point)
+    }
+
+    // 모든 터치 통과 — 라벨 탭은 별도로 앱 윈도우 제스처가 인식
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         return nil
     }

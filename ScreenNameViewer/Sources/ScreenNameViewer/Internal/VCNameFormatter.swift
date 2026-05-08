@@ -23,23 +23,31 @@ enum VCNameFormatter {
         "UISearchController",
     ]
 
-    static func displayName(for vc: UIViewController) -> String? {
-        var name = String(describing: type(of: vc))
+    /// `display`는 라벨에 보일 짧은 이름, `full`은 토스트로 보여줄 모듈
+    /// 프리픽스 + 제너릭 포함 풀네임
+    struct Names {
+        let display: String
+        let full: String
+    }
+
+    static func names(for vc: UIViewController) -> Names? {
+        let raw = String(describing: type(of: vc))
+        var short = raw
 
         // `UIHostingController<NavigationStack<…>>` → `UIHostingController`
-        if let lt = name.firstIndex(of: "<") {
-            name = String(name[..<lt])
+        if let lt = short.firstIndex(of: "<") {
+            short = String(short[..<lt])
         }
 
         // `MyApp.HomeViewController` → `HomeViewController`
-        if let dot = name.lastIndex(of: ".") {
-            name = String(name[name.index(after: dot)...])
+        if let dot = short.lastIndex(of: ".") {
+            short = String(short[short.index(after: dot)...])
         }
 
-        if name.isEmpty || frameworkBaseClasses.contains(name) {
+        if short.isEmpty || frameworkBaseClasses.contains(short) {
             return nil
         }
-        return name
+        return Names(display: short, full: raw)
     }
 }
 #endif

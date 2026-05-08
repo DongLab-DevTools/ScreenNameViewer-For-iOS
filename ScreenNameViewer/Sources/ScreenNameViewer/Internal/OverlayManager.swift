@@ -2,10 +2,15 @@
 import UIKit
 
 @MainActor
-final class OverlayManager {
+final class OverlayManager: NSObject, UIGestureRecognizerDelegate {
 
     private var overlays: [ObjectIdentifier: SceneOverlay] = [:]
     private var sceneObservers: [ObjectIdentifier: NSObjectProtocol] = [:]
+    private let instrumentedWindows = NSHashTable<UIWindow>.weakObjects()
+
+    override init() {
+        super.init()
+    }
 
     /// 현재 상태(vc + route)를 연결된 모든 씬의 오버레이에 적용. 단일 씬
     /// 앱에서는 그 한 씬만 갱신 대상, 멀티 씬 앱에서는 동일한 vc/route 값을
@@ -16,6 +21,13 @@ final class OverlayManager {
         routeName: String?,
         configuration: Configuration
     ) {
+        // 라벨 탭으로 토스트 표시를 위한 제스처를 앱의 실제 윈도우에 설치 —
+        // `cancelsTouchesInView = false` + 동시 인식 허용 덕분에 아래 버튼/
+        // 컨트롤은 평소처럼 정상 동작
+        if let appWindow = viewController?.view.window, !(appWindow is OverlayWindow) {
+            ensureTapGesture(on: appWindow)
+        }
+
         for scene in UIApplication.shared.connectedScenes {
             guard let windowScene = scene as? UIWindowScene else { continue }
             let overlay = ensureOverlay(for: windowScene, configuration: configuration)
@@ -73,6 +85,41 @@ final class OverlayManager {
         sceneObservers[key] = observer
 
         return overlay
+    }
+
+    private func ensureTapGesture(on window: UIWindow) {
+        guard !instrumentedWindows.contains(window) else { return }
+        instrumentedWindows.add(window)
+
+        let tap = UITapGestureRecognizer(target: self, action: #selector(handleAppWindowTap(_:)))
+        // 핵심 — 탭 인식은 하되 아래 버튼/컨트롤로 가는 터치는 막지 않기
+        tap.cancelsTouchesInView = false
+        tap.delaysTouchesBegan = false
+        tap.delaysTouchesEnded = false
+        tap.delegate = self
+        window.addGestureRecognizer(tap)
+    }
+
+    @objc private func handleAppWindowTap(_ gesture: UITapGestureRecognizer) {
+        guard gesture.state == .ended,
+              let appWindow = gesture.view as? UIWindow,
+              let scene = appWindow.windowScene
+        else { return }
+
+        let key = ObjectIdentifier(scene)
+        guard let overlay = overlays[key] else { return }
+
+        let location = gesture.location(in: appWindow)
+        overlay.handlePotentialLabelTap(at: location, fromWindow: appWindow)
+    }
+
+    nonisolated func gestureRecognizer(
+        _ gestureRecognizer: UIGestureRecognizer,
+        shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer
+    ) -> Bool {
+        // 앱이 가진 모든 제스처(버튼, 스크롤, SwiftUI gesture 등)와 나란히
+        // 인식 — 우리 탭 인식이 다른 제스처의 진행을 절대 방해하지 않음
+        return true
     }
 
     /// 현재 화면 최상단 항목 best-effort 탐색. 첫 viewDidAppear 사이클 종료
