@@ -3,26 +3,25 @@ import UIKit
 /// Visual configuration for the overlay.
 ///
 /// The two label styles mirror Android's `activityName` / `composeRouteName`
-/// configuration blocks: `viewController` is rendered for the current
-/// `UIViewController`, `route` is rendered for the current SwiftUI
-/// `NavigationStack` route.
+/// configuration blocks: `viewController` is rendered on the **leading** side
+/// of the screen for the current `UIViewController` (Android Activity), while
+/// `route` is rendered on the **trailing** side for the current SwiftUI
+/// `NavigationStack` route (Android Compose Route). Only the vertical edge is
+/// configurable; horizontal placement is fixed to match Android's UX.
 public struct Configuration {
 
     public var viewController: LabelStyle
     public var route: LabelStyle
     public var verticalPosition: VerticalPosition
-    public var horizontalPosition: HorizontalPosition
 
     public init(
         viewController: LabelStyle = .defaultViewController,
         route: LabelStyle = .defaultRoute,
-        verticalPosition: VerticalPosition = .top,
-        horizontalPosition: HorizontalPosition = .leading
+        verticalPosition: VerticalPosition = .top
     ) {
         self.viewController = viewController
         self.route = route
         self.verticalPosition = verticalPosition
-        self.horizontalPosition = horizontalPosition
     }
 
     public struct LabelStyle {
@@ -66,11 +65,5 @@ public struct Configuration {
     public enum VerticalPosition {
         case top
         case bottom
-    }
-
-    public enum HorizontalPosition {
-        case leading
-        case center
-        case trailing
     }
 }

@@ -4,13 +4,11 @@ import UIKit
 @MainActor
 final class OverlayViewController: UIViewController {
 
-    private let stack = UIStackView()
     private let vcLabel = PaddedLabel()
     private let routeLabel = PaddedLabel()
 
-    private var positionConstraints: [NSLayoutConstraint] = []
+    private var verticalConstraints: [NSLayoutConstraint] = []
     private var lastAppliedVerticalPosition: Configuration.VerticalPosition?
-    private var lastAppliedHorizontalPosition: Configuration.HorizontalPosition?
 
     override func loadView() {
         let v = PassthroughView()
@@ -21,22 +19,29 @@ final class OverlayViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        stack.axis = .vertical
-        stack.spacing = 4
-        stack.alignment = .leading
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        stack.isUserInteractionEnabled = false
+        for label in [vcLabel, routeLabel] {
+            label.translatesAutoresizingMaskIntoConstraints = false
+            label.isUserInteractionEnabled = false
+            label.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+            label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+            view.addSubview(label)
+        }
 
-        view.addSubview(stack)
-        stack.addArrangedSubview(vcLabel)
-        stack.addArrangedSubview(routeLabel)
+        let g = view.safeAreaLayoutGuide
+
+        // Horizontal placement is fixed: vc on the leading side, route on the
+        // trailing side. They never swap.
+        NSLayoutConstraint.activate([
+            vcLabel.leadingAnchor.constraint(equalTo: g.leadingAnchor, constant: 8),
+            routeLabel.trailingAnchor.constraint(equalTo: g.trailingAnchor, constant: -8),
+            // Prevent the two labels from overlapping when content gets long;
+            // either side will truncate before colliding with the other.
+            vcLabel.trailingAnchor.constraint(lessThanOrEqualTo: routeLabel.leadingAnchor, constant: -8),
+        ])
     }
 
     func update(viewControllerName: String?, routeName: String?, configuration: Configuration) {
-        applyPositionIfNeeded(
-            vertical: configuration.verticalPosition,
-            horizontal: configuration.horizontalPosition
-        )
+        applyVerticalPositionIfNeeded(configuration.verticalPosition)
 
         if configuration.viewController.enabled, let name = viewControllerName, !name.isEmpty {
             vcLabel.apply(text: name, style: configuration.viewController)
@@ -53,43 +58,27 @@ final class OverlayViewController: UIViewController {
         }
     }
 
-    private func applyPositionIfNeeded(
-        vertical: Configuration.VerticalPosition,
-        horizontal: Configuration.HorizontalPosition
-    ) {
-        if vertical == lastAppliedVerticalPosition && horizontal == lastAppliedHorizontalPosition {
-            return
-        }
+    private func applyVerticalPositionIfNeeded(_ vertical: Configuration.VerticalPosition) {
+        if vertical == lastAppliedVerticalPosition { return }
         lastAppliedVerticalPosition = vertical
-        lastAppliedHorizontalPosition = horizontal
 
-        NSLayoutConstraint.deactivate(positionConstraints)
-        positionConstraints.removeAll()
+        NSLayoutConstraint.deactivate(verticalConstraints)
+        verticalConstraints.removeAll()
 
         let g = view.safeAreaLayoutGuide
         var c: [NSLayoutConstraint] = []
 
         switch vertical {
         case .top:
-            c.append(stack.topAnchor.constraint(equalTo: g.topAnchor, constant: 4))
+            c.append(vcLabel.topAnchor.constraint(equalTo: g.topAnchor, constant: 4))
+            c.append(routeLabel.topAnchor.constraint(equalTo: g.topAnchor, constant: 4))
         case .bottom:
-            c.append(stack.bottomAnchor.constraint(equalTo: g.bottomAnchor, constant: -4))
-        }
-
-        switch horizontal {
-        case .leading:
-            c.append(stack.leadingAnchor.constraint(equalTo: g.leadingAnchor, constant: 8))
-            stack.alignment = .leading
-        case .trailing:
-            c.append(stack.trailingAnchor.constraint(equalTo: g.trailingAnchor, constant: -8))
-            stack.alignment = .trailing
-        case .center:
-            c.append(stack.centerXAnchor.constraint(equalTo: g.centerXAnchor))
-            stack.alignment = .center
+            c.append(vcLabel.bottomAnchor.constraint(equalTo: g.bottomAnchor, constant: -4))
+            c.append(routeLabel.bottomAnchor.constraint(equalTo: g.bottomAnchor, constant: -4))
         }
 
         NSLayoutConstraint.activate(c)
-        positionConstraints = c
+        verticalConstraints = c
     }
 }
 

@@ -12,31 +12,45 @@ enum Swizzler {
         didSwizzle = true
 
         let cls: AnyClass = UIViewController.self
-        let originalSelector = #selector(UIViewController.viewDidAppear(_:))
-        let swizzledSelector = #selector(UIViewController._snv_swizzled_viewDidAppear(_:))
+        exchange(
+            cls,
+            original: #selector(UIViewController.viewDidAppear(_:)),
+            with: #selector(UIViewController._snv_swizzled_viewDidAppear(_:))
+        )
+        exchange(
+            cls,
+            original: #selector(UIViewController.viewDidDisappear(_:)),
+            with: #selector(UIViewController._snv_swizzled_viewDidDisappear(_:))
+        )
+    }
 
+    private static func exchange(_ cls: AnyClass, original: Selector, with swizzled: Selector) {
         guard
-            let originalMethod = class_getInstanceMethod(cls, originalSelector),
-            let swizzledMethod = class_getInstanceMethod(cls, swizzledSelector)
-        else {
-            return
-        }
-
+            let originalMethod = class_getInstanceMethod(cls, original),
+            let swizzledMethod = class_getInstanceMethod(cls, swizzled)
+        else { return }
         method_exchangeImplementations(originalMethod, swizzledMethod)
     }
 }
 
 extension UIViewController {
 
-    // After `method_exchangeImplementations`, calling this selector executes
-    // the original `viewDidAppear(_:)` implementation, and calling the
-    // original selector executes this body. The recursive-looking call below
-    // is therefore the call to the original method.
+    // After `method_exchangeImplementations`, calling these selectors executes
+    // the original UIKit implementations, and calling the originals executes
+    // these bodies. The recursive-looking calls below are therefore the calls
+    // to the original methods.
+
     @objc dynamic func _snv_swizzled_viewDidAppear(_ animated: Bool) {
         self._snv_swizzled_viewDidAppear(animated)
-
         MainActor.assumeIsolated {
             Tracker.shared.handleViewDidAppear(self)
+        }
+    }
+
+    @objc dynamic func _snv_swizzled_viewDidDisappear(_ animated: Bool) {
+        self._snv_swizzled_viewDidDisappear(animated)
+        MainActor.assumeIsolated {
+            Tracker.shared.handleViewDidDisappear(self)
         }
     }
 }

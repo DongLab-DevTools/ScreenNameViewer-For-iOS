@@ -7,36 +7,30 @@ final class OverlayManager {
     private var overlays: [ObjectIdentifier: SceneOverlay] = [:]
     private var sceneObservers: [ObjectIdentifier: NSObjectProtocol] = [:]
 
-    func update(viewController: UIViewController, configuration: Configuration) {
-        guard let scene = viewController.view.window?.windowScene else { return }
-        let overlay = ensureOverlay(for: scene, configuration: configuration)
-        overlay.updateCurrentViewController(viewController, configuration: configuration)
-    }
-
-    func updateRoute(_ name: String?, configuration: Configuration) {
-        // SwiftUI's modifier doesn't naturally know which UIWindowScene it
-        // belongs to. Apply to every active scene overlay; in single-scene
-        // apps this is exactly what's expected, and in multi-scene apps the
-        // route name is identical anyway because each scene runs its own
-        // SwiftUI graph that drives its own modifier instance.
-        for overlay in overlays.values {
-            overlay.updateRoute(name, configuration: configuration)
-        }
-    }
-
-    func syncWithConnectedScenes(configuration: Configuration) {
+    /// Apply the current state (vc + route) to every connected scene's overlay.
+    /// In single-scene apps this is the only scene; in multi-scene apps the
+    /// vc/route values are global and applied uniformly — good enough for the
+    /// 99% case, and unambiguous for the rare iPad split-window setups.
+    func render(
+        viewController: UIViewController?,
+        routeName: String?,
+        configuration: Configuration
+    ) {
         for scene in UIApplication.shared.connectedScenes {
             guard let windowScene = scene as? UIWindowScene else { continue }
             let overlay = ensureOverlay(for: windowScene, configuration: configuration)
-            if let topVC = topVisibleViewController(in: windowScene) {
-                overlay.updateCurrentViewController(topVC, configuration: configuration)
-            }
+            overlay.update(
+                viewController: viewController,
+                routeName: routeName,
+                configuration: configuration
+            )
         }
     }
 
-    func refreshAll(configuration: Configuration) {
-        for overlay in overlays.values {
-            overlay.refresh(configuration: configuration)
+    func ensureOverlaysForConnectedScenes(configuration: Configuration) {
+        for scene in UIApplication.shared.connectedScenes {
+            guard let windowScene = scene as? UIWindowScene else { continue }
+            _ = ensureOverlay(for: windowScene, configuration: configuration)
         }
     }
 
@@ -78,7 +72,9 @@ final class OverlayManager {
         return overlay
     }
 
-    private func topVisibleViewController(in scene: UIWindowScene) -> UIViewController? {
+    /// Best-effort walk to find what's currently on screen. Used to seed the
+    /// tracker when `start()` is called after the first viewDidAppear cycle.
+    static func topVisibleViewController(in scene: UIWindowScene) -> UIViewController? {
         let candidate = scene.windows.first(where: \.isKeyWindow) ?? scene.windows.first
         return candidate?.rootViewController?._snv_topMostViewController
     }
