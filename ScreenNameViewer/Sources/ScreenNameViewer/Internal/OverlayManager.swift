@@ -57,7 +57,10 @@ final class OverlayManager {
             object: scene,
             queue: .main
         ) { [weak self] _ in
-            MainActor.assumeIsolated {
+            // The notification closure is non-isolated; hop into MainActor
+            // before touching `@MainActor` state. Slight async delay is fine
+            // because this is just scene-disconnect cleanup.
+            Task { @MainActor [weak self] in
                 guard let self else { return }
                 self.overlays[key]?.tearDown()
                 self.overlays[key] = nil

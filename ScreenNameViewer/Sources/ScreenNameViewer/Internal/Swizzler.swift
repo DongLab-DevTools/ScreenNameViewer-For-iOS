@@ -40,18 +40,17 @@ extension UIViewController {
     // these bodies. The recursive-looking calls below are therefore the calls
     // to the original methods.
 
+    // UIViewController is `@MainActor` in modern UIKit headers, so these
+    // extension methods inherit main-actor isolation; calls to the
+    // `@MainActor` Tracker compile without an explicit isolation guard.
     @objc dynamic func _snv_swizzled_viewDidAppear(_ animated: Bool) {
         self._snv_swizzled_viewDidAppear(animated)
-        MainActor.assumeIsolated {
-            Tracker.shared.handleViewDidAppear(self)
-        }
+        Tracker.shared.handleViewDidAppear(self)
     }
 
     @objc dynamic func _snv_swizzled_viewDidDisappear(_ animated: Bool) {
         self._snv_swizzled_viewDidDisappear(animated)
-        MainActor.assumeIsolated {
-            Tracker.shared.handleViewDidDisappear(self)
-        }
+        Tracker.shared.handleViewDidDisappear(self)
     }
 }
 #endif

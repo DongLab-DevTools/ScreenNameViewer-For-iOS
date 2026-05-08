@@ -34,14 +34,24 @@ private struct _TrackScreenNameModifier: ViewModifier {
     // screen instead of being clobbered by a stray "set to nil" call.
     @State private var id = UUID()
 
+    @ViewBuilder
     func body(content: Content) -> some View {
         #if DEBUG
-        content
-            .onAppear { Tracker.shared.setRoute(id: id, name: routeName) }
-            .onChange(of: routeName) { _, new in
-                Tracker.shared.setRoute(id: id, name: new)
-            }
-            .onDisappear { Tracker.shared.removeRoute(id: id) }
+        if #available(iOS 17, *) {
+            content
+                .onAppear { Tracker.shared.setRoute(id: id, name: routeName) }
+                .onChange(of: routeName) { _, new in
+                    Tracker.shared.setRoute(id: id, name: new)
+                }
+                .onDisappear { Tracker.shared.removeRoute(id: id) }
+        } else {
+            content
+                .onAppear { Tracker.shared.setRoute(id: id, name: routeName) }
+                .onChange(of: routeName) { new in
+                    Tracker.shared.setRoute(id: id, name: new)
+                }
+                .onDisappear { Tracker.shared.removeRoute(id: id) }
+        }
         #else
         content
         #endif
