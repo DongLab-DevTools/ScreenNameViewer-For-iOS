@@ -1,13 +1,12 @@
 #if DEBUG
 import UIKit
 
-/// Turns a `UIViewController` instance into a name suitable for display in
-/// the overlay. The contract is: every name shown must be a symbol the
-/// developer can grep for in their own codebase. If the controller's class is
-/// a framework base class whose name would not lead anywhere useful (e.g.
-/// `UIHostingController<...>`), this returns `nil` and the vc label is
-/// hidden — at which point the SwiftUI `.trackScreenName(...)` modifier is
-/// expected to provide a meaningful route name instead.
+/// `UIViewController` 인스턴스를 오버레이 표시용 이름으로 변환
+///
+/// 계약 — 오버레이의 모든 표시 이름은 개발자 코드베이스에서 grep 가능한
+/// 심볼. 어떤 사용자 파일로도 연결 불가능한 프레임워크 베이스 클래스(예:
+/// `UIHostingController<...>`)면 nil 반환 → vc 라벨 자동 미표시. 이 경우
+/// SwiftUI `.trackScreenName(...)` 모디파이어가 의미 있는 라우트 이름 제공 전제
 enum VCNameFormatter {
 
     private static let frameworkBaseClasses: Set<String> = [

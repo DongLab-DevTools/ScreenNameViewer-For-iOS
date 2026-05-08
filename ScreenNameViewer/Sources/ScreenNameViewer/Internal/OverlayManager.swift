@@ -7,10 +7,10 @@ final class OverlayManager {
     private var overlays: [ObjectIdentifier: SceneOverlay] = [:]
     private var sceneObservers: [ObjectIdentifier: NSObjectProtocol] = [:]
 
-    /// Apply the current state (vc + route) to every connected scene's overlay.
-    /// In single-scene apps this is the only scene; in multi-scene apps the
-    /// vc/route values are global and applied uniformly — good enough for the
-    /// 99% case, and unambiguous for the rare iPad split-window setups.
+    /// 현재 상태(vc + route)를 연결된 모든 씬의 오버레이에 적용. 단일 씬
+    /// 앱에서는 그 한 씬만 갱신 대상, 멀티 씬 앱에서는 동일한 vc/route 값을
+    /// 모든 씬에 일괄 적용 — 99% 케이스 깔끔 커버 + iPad의 드문 split-window
+    /// 상황에서도 결과 명확
     func render(
         viewController: UIViewController?,
         routeName: String?,
@@ -57,9 +57,9 @@ final class OverlayManager {
             object: scene,
             queue: .main
         ) { [weak self] _ in
-            // The notification closure is non-isolated; hop into MainActor
-            // before touching `@MainActor` state. Slight async delay is fine
-            // because this is just scene-disconnect cleanup.
+            // notification 클로저는 isolation 부재 — `@MainActor` 상태 접근
+            // 전 MainActor 진입 필요. 씬 disconnect 정리 작업이라 약간의
+            // async 지연 무관
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 self.overlays[key]?.tearDown()
@@ -75,8 +75,8 @@ final class OverlayManager {
         return overlay
     }
 
-    /// Best-effort walk to find what's currently on screen. Used to seed the
-    /// tracker when `start()` is called after the first viewDidAppear cycle.
+    /// 현재 화면 최상단 항목 best-effort 탐색. 첫 viewDidAppear 사이클 종료
+    /// 후 `start()` 호출 시 트래커 시드 용도
     static func topVisibleViewController(in scene: UIWindowScene) -> UIViewController? {
         let candidate = scene.windows.first(where: \.isKeyWindow) ?? scene.windows.first
         return candidate?.rootViewController?._snv_topMostViewController

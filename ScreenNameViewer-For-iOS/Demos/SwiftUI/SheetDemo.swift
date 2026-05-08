@@ -18,7 +18,7 @@ struct SheetDemo: View {
         .navigationTitle("Sheet")
         .sheet(isPresented: $showFirst) {
             SheetContent(title: "Standard Sheet")
-                // Override the route name while this sheet is on screen.
+                // 이 시트가 화면에 떠 있는 동안 라우트 이름 덮어쓰기
                 .trackScreenName("StandardSheet")
         }
         .sheet(isPresented: $showSecond) {

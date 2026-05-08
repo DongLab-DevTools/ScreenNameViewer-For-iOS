@@ -29,13 +29,11 @@ final class OverlayViewController: UIViewController {
 
         let g = view.safeAreaLayoutGuide
 
-        // Horizontal placement is fixed: vc on the leading side, route on the
-        // trailing side. They never swap.
+        // 수평 위치 고정 — vc 좌측 / route 우측, swap 불가
         NSLayoutConstraint.activate([
             vcLabel.leadingAnchor.constraint(equalTo: g.leadingAnchor, constant: 8),
             routeLabel.trailingAnchor.constraint(equalTo: g.trailingAnchor, constant: -8),
-            // Prevent the two labels from overlapping when content gets long;
-            // either side will truncate before colliding with the other.
+            // 두 라벨 겹침 방지 — 충돌 직전에 어느 한 쪽 먼저 truncate
             vcLabel.trailingAnchor.constraint(lessThanOrEqualTo: routeLabel.leadingAnchor, constant: -8),
         ])
     }

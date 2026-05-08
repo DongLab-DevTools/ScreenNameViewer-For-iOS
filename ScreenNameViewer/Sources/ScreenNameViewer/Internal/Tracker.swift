@@ -11,21 +11,20 @@ final class Tracker {
 
     private let overlays = OverlayManager()
 
-    // Active VCs in appearance order. The most recent live entry is the
-    // current "screen". A stack-based approach naturally handles partial-cover
-    // modals (page sheets, alerts), tab switches, and nav-stack pushes/pops:
-    // when a sheet's content disappears we pop it and the presenter is back
-    // on top automatically — no rescan needed.
+    // 화면에 나타난 순서로 쌓이는 VC 스택 — 가장 최근의 살아있는 항목이
+    // 현재 화면. 스택 방식은 부분 가림 모달(페이지 시트, 알럿), 탭 전환,
+    // 네비 스택 push/pop을 자연스럽게 처리 — 시트가 닫힐 때 항목이 pop되면
+    // 자동으로 그 아래 presenter가 top으로 복원되므로 별도 rescan 불필요
     private var vcStack: [WeakVC] = []
 
-    // Stack of route entries pushed by SwiftUI .trackScreenName modifiers.
-    // The most recently appeared entry wins.
+    // SwiftUI `.trackScreenName` 모디파이어가 push한 라우트 항목 스택 —
+    // 가장 최근에 등장한 항목의 이름이 표시
     private var routeEntries: [(id: UUID, name: String?)] = []
 
-    // Render coalescing: every public mutation only schedules work for the
-    // next runloop tick. Multiple changes in the same tick (e.g. a tab swap
-    // firing onAppear+onDisappear back-to-back) collapse into one render, so
-    // the overlay never shows an intermediate "empty" state.
+    // 렌더 합치기 — 모든 외부 변경은 다음 runloop tick에 한 번만 작업 예약.
+    // 같은 tick 안에 여러 변경이 들어와도(예: 탭 교체 시 onAppear/
+    // onDisappear가 연달아 발생) 한 번의 렌더로 합쳐지므로 오버레이가
+    // 중간 "빈 상태"를 노출하지 않음
     private var renderScheduled = false
 
     private init() {}
@@ -41,8 +40,8 @@ final class Tracker {
 
         Swizzler.swizzleOnce()
 
-        // Seed the vc stack with whatever is already on screen, in case
-        // `start` was called after the first viewDidAppear cycle finished.
+        // 첫 viewDidAppear 사이클이 끝난 뒤에 `start`가 호출된 경우 대비 —
+        // 이미 화면에 떠 있는 VC로 스택을 시드
         overlays.ensureOverlaysForConnectedScenes(configuration: configuration)
         for scene in UIApplication.shared.connectedScenes {
             guard let ws = scene as? UIWindowScene,
@@ -92,8 +91,8 @@ final class Tracker {
 
     private func push(_ vc: UIViewController) {
         let id = ObjectIdentifier(vc)
-        // Move-to-top: drop any prior entry for this VC plus any deallocated
-        // entries, then append.
+        // top으로 끌어올리기 — 같은 VC의 기존 항목과 이미 해제된 항목을
+        // 모두 제거하고 새로 append
         vcStack.removeAll { $0.id == id || $0.value == nil }
         vcStack.append(WeakVC(vc))
     }

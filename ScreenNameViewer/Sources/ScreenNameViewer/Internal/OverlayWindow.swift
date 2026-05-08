@@ -27,8 +27,8 @@ final class OverlayWindow: UIWindow {
         )
     }
 
-    // Belt-and-suspenders: even though `isUserInteractionEnabled` is false,
-    // make absolutely sure no touch ever lands here.
+    // 이중 안전장치 — `isUserInteractionEnabled = false`만으로 충분하나 어떠한
+    // 터치도 절대 이 윈도우에 도달하지 않도록 hitTest에서도 nil 반환
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         return nil
     }
