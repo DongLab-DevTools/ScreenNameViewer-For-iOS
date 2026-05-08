@@ -35,13 +35,8 @@ enum Swizzler {
 
 extension UIViewController {
 
-    // `method_exchangeImplementations` 이후 — 이 셀렉터 호출 시 원본 UIKit
-    // 구현 실행, 원본 셀렉터 호출 시 아래 본문 실행. 따라서 아래의 재귀처럼
-    // 보이는 호출이 사실상 원본 메서드 호출
-
-    // UIViewController는 모던 UIKit 헤더에서 이미 `@MainActor` 어노테이션
-    // — 이 extension 메서드도 main-actor isolation 묵시적 상속, 별도 isolation
-    // 가드 없이 `@MainActor` Tracker 직접 호출 가능
+    // 메서드 교환 후, 아래의 재귀처럼 보이는 호출이 사실 원본 viewDidAppear/Disappear 호출
+    // UIViewController가 `@MainActor`라 이 extension도 isolation 상속 → Tracker 직접 호출 가능
     @objc dynamic func _snv_swizzled_viewDidAppear(_ animated: Bool) {
         self._snv_swizzled_viewDidAppear(animated)
         Tracker.shared.handleViewDidAppear(self)

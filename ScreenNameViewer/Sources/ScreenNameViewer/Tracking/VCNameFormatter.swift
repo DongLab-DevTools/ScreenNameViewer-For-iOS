@@ -1,12 +1,11 @@
 #if DEBUG
 import UIKit
 
-/// `UIViewController` 인스턴스를 오버레이 표시용 이름으로 변환
+/// `UIViewController`를 오버레이 표시용 이름으로 변환
 ///
-/// 계약 — 오버레이의 모든 표시 이름은 개발자 코드베이스에서 grep 가능한
-/// 심볼. 어떤 사용자 파일로도 연결 불가능한 프레임워크 베이스 클래스(예:
-/// `UIHostingController<...>`)면 nil 반환 → vc 라벨 자동 미표시. 이 경우
-/// SwiftUI `.trackScreenName(...)` 모디파이어가 의미 있는 라우트 이름 제공 전제
+/// 계약: 표시되는 이름은 모두 사용자 코드베이스에서 grep 가능한 심볼
+/// 프레임워크 베이스 클래스(예: `UIHostingController<...>`)는 nil 반환 → vc 라벨 자동 미표시
+/// SwiftUI 화면은 `.trackScreenName(...)`이 라우트 이름 제공 전제
 enum VCNameFormatter {
 
     private static let frameworkBaseClasses: Set<String> = [
@@ -23,8 +22,8 @@ enum VCNameFormatter {
         "UISearchController",
     ]
 
-    /// `display`는 라벨에 보일 짧은 이름, `full`은 토스트로 보여줄 모듈
-    /// 프리픽스 + 제너릭 포함 풀네임
+    /// `display`: 라벨용 짧은 이름
+    /// `full`: 토스트용 풀네임 (모듈 프리픽스 + 제너릭 포함)
     struct Names {
         let display: String
         let full: String

@@ -28,8 +28,8 @@ final class OverlayWindow: UIWindow {
         )
     }
 
-    /// 오버레이 윈도우 좌표의 탭 위치를 OverlayViewController에 전달 —
-    /// OverlayManager가 앱 윈도우 제스처에서 받은 탭을 여기로 라우팅
+    /// 오버레이 윈도우 좌표의 탭 위치를 OverlayViewController에 전달
+    /// - OverlayManager가 앱 윈도우 제스처에서 받은 탭을 여기로 라우팅
     func handlePotentialLabelTap(at point: CGPoint) {
         overlayVC.handlePotentialLabelTap(at: point)
     }
