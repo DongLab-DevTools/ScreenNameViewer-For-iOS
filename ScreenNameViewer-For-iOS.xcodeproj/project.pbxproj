@@ -343,7 +343,7 @@
 /* Begin XCLocalSwiftPackageReference section */
 		CE5CD17A5E7440DE8654DCF3 /* XCLocalSwiftPackageReference "ScreenNameViewer" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ScreenNameViewer;
+			relativePath = .;
 		};
 /* End XCLocalSwiftPackageReference section */
 

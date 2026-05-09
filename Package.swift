@@ -14,8 +14,7 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "ScreenNameViewer",
-            path: "Sources/ScreenNameViewer"
+            name: "ScreenNameViewer"
         ),
     ]
 )
