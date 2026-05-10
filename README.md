@@ -228,6 +228,155 @@ Open `ScreenNameViewer-For-iOS.xcodeproj` and run to see the library in action a
 
 <br>
 
+## Architecture
+
+```mermaid
+classDiagram
+    direction TB
+
+    class ScreenNameViewer {
+        <<enum>>
+        +start(configure)$
+        +stop()$
+    }
+
+    class Configuration {
+        <<struct>>
+        +viewController: LabelStyle
+        +route: LabelStyle
+        +verticalPosition: VerticalPosition
+    }
+
+    class LabelStyle {
+        <<struct>>
+        +textColor: UIColor
+        +backgroundColor: UIColor
+        +textSize: CGFloat
+        +enabled: Bool
+    }
+
+    class TrackScreenNameModifier {
+        <<ViewModifier>>
+        -id: UUID
+        -routeName: String?
+    }
+
+    class Tracker {
+        <<MainActor singleton>>
+        +shared: Tracker$
+        -isRunning: Bool
+        +start(config)
+        +stop()
+        +handleViewDidAppear(vc)
+        +handleViewDidDisappear(vc)
+        +setRoute(id, name)
+        +removeRoute(id)
+    }
+
+    class VCStack {
+        <<struct>>
+        -entries: WeakVC[]
+        +push(vc)
+        +remove(vc)
+        +top: UIViewController?
+    }
+
+    class RouteRegistry {
+        <<struct>>
+        -entries: tuples
+        +set(id, name)
+        +remove(id)
+        +current: String?
+    }
+
+    class RenderScheduler {
+        <<MainActor>>
+        -scheduled: Bool
+        +schedule(action)
+    }
+
+    class Swizzler {
+        <<enum>>
+        +swizzleOnce()$
+    }
+
+    class VCNameFormatter {
+        <<enum>>
+        +names(for: vc)$ Names?
+    }
+
+    class Names {
+        <<struct>>
+        +display: String
+        +full: String
+    }
+
+    class OverlayManager {
+        <<MainActor>>
+        +render(vc, route, config)
+        +removeAll()
+        +topVisibleViewController(in)$
+    }
+
+    class SceneOverlay {
+        <<MainActor>>
+        +update(vc, route, config)
+        +handlePotentialLabelTap(at, fromWindow)
+        +tearDown()
+    }
+
+    class OverlayWindow {
+        <<UIWindow>>
+        +update(...)
+        +handlePotentialLabelTap(at)
+        +hitTest()
+    }
+
+    class OverlayViewController {
+        <<UIViewController>>
+        +update(...)
+        +handlePotentialLabelTap(at)
+        -showToast(text)
+    }
+
+    class AppWindowTapInstaller {
+        <<NSObject + UIGestureDelegate>>
+        +onTap: closure
+        +installIfNeeded(on: window)
+    }
+
+    Configuration *-- LabelStyle
+    VCNameFormatter ..> Names
+
+    ScreenNameViewer ..> Tracker
+    TrackScreenNameModifier ..> Tracker
+
+    Swizzler ..> Tracker
+
+    Tracker *-- VCStack
+    Tracker *-- RouteRegistry
+    Tracker *-- RenderScheduler
+    Tracker *-- OverlayManager
+    Tracker ..> Swizzler
+
+    OverlayManager *-- SceneOverlay
+    OverlayManager *-- AppWindowTapInstaller
+
+    SceneOverlay *-- OverlayWindow
+    SceneOverlay ..> VCNameFormatter
+
+    OverlayWindow *-- OverlayViewController
+```
+
+**Notation**
+
+- `*--` composition (the parent owns the child instance directly)
+- `..>` dependency (calls only, no ownership)
+- `<<...>>` stereotype (struct / enum / MainActor class / UIWindow, etc.)
+- `+` public, `-` private, `$` static
+
+<br>
+
 ## Contributors
 
 <!-- readme: collaborators,contributors -start -->

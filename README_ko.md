@@ -228,6 +228,155 @@ ScreenNameViewer.start { config in
 
 <br>
 
+## 아키텍처
+
+```mermaid
+classDiagram
+    direction TB
+
+    class ScreenNameViewer {
+        <<enum>>
+        +start(configure)$
+        +stop()$
+    }
+
+    class Configuration {
+        <<struct>>
+        +viewController: LabelStyle
+        +route: LabelStyle
+        +verticalPosition: VerticalPosition
+    }
+
+    class LabelStyle {
+        <<struct>>
+        +textColor: UIColor
+        +backgroundColor: UIColor
+        +textSize: CGFloat
+        +enabled: Bool
+    }
+
+    class TrackScreenNameModifier {
+        <<ViewModifier>>
+        -id: UUID
+        -routeName: String?
+    }
+
+    class Tracker {
+        <<MainActor singleton>>
+        +shared: Tracker$
+        -isRunning: Bool
+        +start(config)
+        +stop()
+        +handleViewDidAppear(vc)
+        +handleViewDidDisappear(vc)
+        +setRoute(id, name)
+        +removeRoute(id)
+    }
+
+    class VCStack {
+        <<struct>>
+        -entries: WeakVC[]
+        +push(vc)
+        +remove(vc)
+        +top: UIViewController?
+    }
+
+    class RouteRegistry {
+        <<struct>>
+        -entries: tuples
+        +set(id, name)
+        +remove(id)
+        +current: String?
+    }
+
+    class RenderScheduler {
+        <<MainActor>>
+        -scheduled: Bool
+        +schedule(action)
+    }
+
+    class Swizzler {
+        <<enum>>
+        +swizzleOnce()$
+    }
+
+    class VCNameFormatter {
+        <<enum>>
+        +names(for: vc)$ Names?
+    }
+
+    class Names {
+        <<struct>>
+        +display: String
+        +full: String
+    }
+
+    class OverlayManager {
+        <<MainActor>>
+        +render(vc, route, config)
+        +removeAll()
+        +topVisibleViewController(in)$
+    }
+
+    class SceneOverlay {
+        <<MainActor>>
+        +update(vc, route, config)
+        +handlePotentialLabelTap(at, fromWindow)
+        +tearDown()
+    }
+
+    class OverlayWindow {
+        <<UIWindow>>
+        +update(...)
+        +handlePotentialLabelTap(at)
+        +hitTest()
+    }
+
+    class OverlayViewController {
+        <<UIViewController>>
+        +update(...)
+        +handlePotentialLabelTap(at)
+        -showToast(text)
+    }
+
+    class AppWindowTapInstaller {
+        <<NSObject + UIGestureDelegate>>
+        +onTap: closure
+        +installIfNeeded(on: window)
+    }
+
+    Configuration *-- LabelStyle
+    VCNameFormatter ..> Names
+
+    ScreenNameViewer ..> Tracker
+    TrackScreenNameModifier ..> Tracker
+
+    Swizzler ..> Tracker
+
+    Tracker *-- VCStack
+    Tracker *-- RouteRegistry
+    Tracker *-- RenderScheduler
+    Tracker *-- OverlayManager
+    Tracker ..> Swizzler
+
+    OverlayManager *-- SceneOverlay
+    OverlayManager *-- AppWindowTapInstaller
+
+    SceneOverlay *-- OverlayWindow
+    SceneOverlay ..> VCNameFormatter
+
+    OverlayWindow *-- OverlayViewController
+```
+
+**표기 의미**
+
+- `*--` 컴포지션 (부모가 자식 인스턴스를 직접 보유)
+- `..>` 의존 (호출만, 소유 X)
+- `<<...>>` 스테레오타입 (struct / enum / MainActor 클래스 / UIWindow 등)
+- `+` public, `-` private, `$` static
+
+<br>
+
 ## 기여자
 
 <!-- readme: collaborators,contributors -start -->
