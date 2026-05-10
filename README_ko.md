@@ -72,11 +72,33 @@ dependencies: [
 
 ## 사용법
 
-### App 진입점에서 초기화
+### UIKit
 
-한 번만 호출하면 모든 `UIViewController`가 자동 추적됩니다.
+`AppDelegate`에서 `ScreenNameViewer.start()` 한 번만 호출하면 모든 `UIViewController`가 method swizzling으로 자동 추적됩니다. 추가 코드 작업은 필요 없습니다.
 
-#### SwiftUI 앱
+```swift
+import UIKit
+import ScreenNameViewer
+
+@main
+final class AppDelegate: UIResponder, UIApplicationDelegate {
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+    ) -> Bool {
+        ScreenNameViewer.start()
+        return true
+    }
+}
+```
+
+좌측 라벨에 현재 표시 중인 `UIViewController`의 클래스명이 자동으로 표시됩니다.
+
+<br>
+
+### SwiftUI
+
+#### 1. App 진입점에서 초기화
 
 ```swift
 import SwiftUI
@@ -96,29 +118,11 @@ struct MyApp: App {
 }
 ```
 
-#### UIKit 앱
+이것만으로도 모든 화면이 추적되지만 SwiftUI 뷰는 `UIHostingController`가 호스팅해서 프레임워크 노이즈로 필터링되기 때문에 라벨에 표시되지 않습니다. SwiftUI 화면에 의미 있는 이름을 표시하려면 아래 모디파이어를 추가하세요.
 
-```swift
-import UIKit
-import ScreenNameViewer
+#### 2. NavigationStack 라우트 추적
 
-@main
-final class AppDelegate: UIResponder, UIApplicationDelegate {
-    func application(
-        _ application: UIApplication,
-        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
-    ) -> Bool {
-        ScreenNameViewer.start()
-        return true
-    }
-}
-```
-
-<br>
-
-### NavigationStack 라우트 추적 (SwiftUI)
-
-루트 `NavigationStack`에 한 번만 모디파이어 추가하면 push/pop 시 우측 라벨이 자동 갱신됩니다.
+루트 `NavigationStack`에 한 번만 모디파이어를 추가합니다. push/pop 시 우측 라벨이 자동 갱신됩니다.
 
 ```swift
 struct ContentView: View {
@@ -133,11 +137,9 @@ struct ContentView: View {
 }
 ```
 
-<br>
+#### 3. 시트 / 탭 / Cover — 명시적 라우트
 
-### 시트 / 탭 / Cover 등 명시적 라우트 (선택)
-
-`NavigationStack` path 밖에 있는 화면은 별도로 명시:
+`NavigationStack` path 밖에 있는 화면은 별도로 명시합니다.
 
 ```swift
 .sheet(isPresented: $showSheet) {

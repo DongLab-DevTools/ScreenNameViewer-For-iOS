@@ -72,11 +72,33 @@ Add to your target's dependencies:
 
 ## Usage
 
-### Initialize at the App entry point
+### UIKit
 
-A single call automatically tracks every `UIViewController` that becomes visible.
+Call `ScreenNameViewer.start()` once in your `AppDelegate`. Every `UIViewController` is then automatically tracked via method swizzling — no further code changes needed.
 
-#### SwiftUI App
+```swift
+import UIKit
+import ScreenNameViewer
+
+@main
+final class AppDelegate: UIResponder, UIApplicationDelegate {
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+    ) -> Bool {
+        ScreenNameViewer.start()
+        return true
+    }
+}
+```
+
+The left label automatically displays the class name of the currently visible `UIViewController`.
+
+<br>
+
+### SwiftUI
+
+#### 1. Initialize at the App entry point
 
 ```swift
 import SwiftUI
@@ -96,29 +118,11 @@ struct MyApp: App {
 }
 ```
 
-#### UIKit App
+This alone tracks every screen, but SwiftUI views are hosted by `UIHostingController` whose class name is filtered out as framework noise. To show meaningful names for SwiftUI screens, add the modifiers below.
 
-```swift
-import UIKit
-import ScreenNameViewer
+#### 2. Track NavigationStack routes
 
-@main
-final class AppDelegate: UIResponder, UIApplicationDelegate {
-    func application(
-        _ application: UIApplication,
-        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
-    ) -> Bool {
-        ScreenNameViewer.start()
-        return true
-    }
-}
-```
-
-<br>
-
-### Track NavigationStack routes (SwiftUI)
-
-Apply the modifier once on the root `NavigationStack`. Push/pop transitions automatically update the route label.
+Apply once on the root `NavigationStack`. Push/pop transitions automatically update the right label.
 
 ```swift
 struct ContentView: View {
@@ -133,9 +137,7 @@ struct ContentView: View {
 }
 ```
 
-<br>
-
-### Sheet / Tab / Cover — explicit tracking (optional)
+#### 3. Sheet / Tab / Cover — explicit tracking
 
 For screens outside the NavigationStack path, declare the name explicitly:
 
