@@ -1,42 +1,50 @@
 # ScreenNameViewer-For-iOS
+[![Hits](https://myhits.vercel.app/api/hit/https%3A%2F%2Fgithub.com%2FDongLab-DevTools%2FScreenNameViewer-For-iOS%3Ftab%3Dreadme-ov-file?color=blue&label=hits&size=small)](https://myhits.vercel.app)
+[![Platform](https://img.shields.io/badge/platform-iOS-000000?style=flat-square&logo=apple)](https://developer.apple.com/ios)
+[![iOS](https://img.shields.io/badge/iOS-16.0%2B-blue?style=flat-square)](https://developer.apple.com/ios)
+[![Swift](https://img.shields.io/badge/Swift-5.9%2B-orange?style=flat-square&logo=swift)](https://swift.org)
+[![SPM](https://img.shields.io/badge/SPM-compatible-brightgreen?style=flat-square)](https://swift.org/package-manager/)
+![GitHub stars](https://img.shields.io/github/stars/DongLab-DevTools/ScreenNameViewer-For-iOS.svg)
 
-## 개요
 
-<!-- 샘플 이미지 자리 -->
+
+**[한국어 README](./README_ko.md)**
+
+## Overview
+
+<!-- Sample image placeholder -->
 <!-- ![sample](.github/docs/images/screennameviewer-example.png) -->
 
-ScreenNameViewer는 현재 표시 중인 화면의 클래스명을 오버레이로 보여주는 디버깅 도구입니다.
-어떤 화면이 활성화되어 있는지 직관적으로 확인할 수 있으며, SwiftUI 환경에서는 `NavigationStack` 라우트까지 함께 표시할 수 있습니다.
+ScreenNameViewer is a debugging tool that overlays the class name of the currently displayed screen.
+It allows you to intuitively check which screen is active, and in a SwiftUI environment, it can also display the `NavigationStack` route.
 
-이를 통해 원하는 화면의 코드를 빠르게 찾아 접근할 수 있어 디버깅과 개발 효율을 높여줍니다.
-
-> [Android(Compose) 버전](https://github.com/DongLab-DevTools/ScreenNameViewer-For-Compose)도 같이 보세요.
+This allows you to quickly find and navigate to the code for the desired screen, improving both debugging and development efficiency.
 
 <br>
 
-## 특징
+## Features
 
-- **실시간 클래스명 표시**: `UIViewController` 클래스명과 `NavigationStack` 라우트를 화면에 실시간 표시
-- **자동 라이프사이클 추적**: Application 레벨에서 method swizzling으로 모든 `UIViewController`를 자동 추적
-- **DEBUG 전용**: 모든 내부 코드가 `#if DEBUG`로 감싸져 있어 RELEASE 빌드에서는 자동 비활성화 — 런타임 비용 0
-- **UI 커스터마이징**: 텍스트 크기, 색상, 수직 위치 등 자유롭게 설정 가능
-- **메모리 안전**: 약한 참조 + 자동 정리로 메모리 누수 방지
-- **터치 상호작용**: 라벨 터치 시 풀 클래스명 토스트 표시, 그 외 영역은 모두 통과 — 기존 화면의 터치 막지 않음
-- **SwiftUI / UIKit 모두 지원**: 한 라이브러리로 두 프레임워크 동시 커버
+- **Real-time class name display**: Shows `UIViewController` class names and `NavigationStack` route on screen in real-time
+- **Automatic lifecycle tracking**: Automatically tracks all `UIViewController`s using method swizzling at the application level
+- **Debug-only**: All internal code wrapped in `#if DEBUG` — automatically disabled in RELEASE builds with zero runtime cost
+- **UI customization**: Freely configure text size, color, vertical position, etc.
+- **Memory safe**: Prevents memory leaks using weak references and automatic cleanup
+- **Touch interaction**: Tap label to display full class name in toast — non-label areas pass through, never blocking the underlying app
+- **Both SwiftUI and UIKit**: One library covers both frameworks
 
 <br>
 
-## 설치
+## Installation
 
 ### Swift Package Manager
 
-Xcode에서 `File → Add Package Dependencies...` 다이얼로그에 다음 URL 입력:
+In Xcode, `File → Add Package Dependencies...` and enter:
 
 ```
 https://github.com/DongLab-DevTools/ScreenNameViewer-For-iOS
 ```
 
-또는 `Package.swift`의 dependencies에 직접 추가:
+Or add directly to `Package.swift`:
 
 ```swift
 dependencies: [
@@ -44,7 +52,7 @@ dependencies: [
 ]
 ```
 
-타겟의 dependencies에도 추가:
+Add to your target's dependencies:
 
 ```swift
 .target(
@@ -55,20 +63,20 @@ dependencies: [
 
 <br>
 
-### 요구사항
+### Requirements
 
-- iOS 16.0 이상
-- Swift 5.9 이상 (Xcode 15+)
+- iOS 16.0 or higher
+- Swift 5.9 or higher (Xcode 15+)
 
 <br>
 
-## 사용법
+## Usage
 
-### App 진입점에서 초기화
+### Initialize at the App entry point
 
-한 번만 호출하면 모든 `UIViewController`가 자동 추적됩니다.
+A single call automatically tracks every `UIViewController` that becomes visible.
 
-#### SwiftUI 앱
+#### SwiftUI App
 
 ```swift
 import SwiftUI
@@ -88,7 +96,7 @@ struct MyApp: App {
 }
 ```
 
-#### UIKit 앱
+#### UIKit App
 
 ```swift
 import UIKit
@@ -108,9 +116,9 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
 <br>
 
-### NavigationStack 라우트 추적 (SwiftUI)
+### Track NavigationStack routes (SwiftUI)
 
-루트 `NavigationStack`에 한 번만 모디파이어 추가하면 push/pop 시 우측 라벨이 자동 갱신됩니다.
+Apply the modifier once on the root `NavigationStack`. Push/pop transitions automatically update the route label.
 
 ```swift
 struct ContentView: View {
@@ -127,9 +135,9 @@ struct ContentView: View {
 
 <br>
 
-### 시트 / 탭 / Cover 등 명시적 라우트 (선택)
+### Sheet / Tab / Cover — explicit tracking (optional)
 
-`NavigationStack` path 밖에 있는 화면은 별도로 명시:
+For screens outside the NavigationStack path, declare the name explicitly:
 
 ```swift
 .sheet(isPresented: $showSheet) {
@@ -149,90 +157,76 @@ TabView {
 }
 ```
 
-중첩 구조 친화 — 시트가 떠 있는 동안엔 그 값이 우선 표시되고, dismiss 되면 이전 값이 자동 복원됩니다.
+Stack-friendly — when a sheet is on screen, its name takes precedence; on dismissal the previous value is automatically restored.
 
 <br>
 
-## 설정
+## Configuration
 
 ### Configuration
 
-`start { config in ... }`로 외형 커스터마이징:
+Customize the overlay appearance via `start { config in ... }`:
 
 ```swift
 ScreenNameViewer.start { config in
-    // 좌측 라벨 — UIViewController 이름 (Android Activity 대응)
+    // Left label — UIViewController name
     config.viewController.textColor = .white
     config.viewController.backgroundColor = UIColor.black.withAlphaComponent(0.7)
     config.viewController.textSize = 12
     config.viewController.enabled = true
 
-    // 우측 라벨 — NavigationStack 라우트 (Android Compose Route 대응)
+    // Right label — NavigationStack route
     config.route.textColor = .systemYellow
     config.route.backgroundColor = UIColor.black.withAlphaComponent(0.7)
     config.route.textSize = 12
 
-    // 수직 위치 (top / bottom). 수평 위치는 좌/우 고정
+    // Vertical position (top / bottom). Horizontal placement is fixed (left/right).
     config.verticalPosition = .top
 }
 ```
 
 <br>
 
-### 설정 옵션
+### Configuration Options
 
-- **viewController** / **route**: 두 라벨 각각의 스타일
-  - `textColor`: 텍스트 색상
-  - `backgroundColor`: 배경 색상
-  - `textSize`: 텍스트 크기
-  - `enabled`: 라벨 표시 여부
-  - `paddingHorizontal` / `paddingVertical`: 내부 패딩
-  - `cornerRadius`: 모서리 둥글기
+- **viewController** / **route**: Style for each label
+  - `textColor`: Text color
+  - `backgroundColor`: Background color
+  - `textSize`: Text size
+  - `enabled`: Whether the label is visible
+  - `paddingHorizontal` / `paddingVertical`: Internal padding
+  - `cornerRadius`: Corner radius
 
-- **verticalPosition**: 오버레이의 수직 위치 (`.top` / `.bottom`)
-  수평 위치는 좌측(viewController) / 우측(route) 고정
-
-<br>
-
-## 동작 원리
-
-오버레이에 표시되는 이름은 항상 사용자 코드의 심볼이 되도록 정규화됩니다:
-
-1. `String(describing: type(of: vc))` → 풀네임 획득 (예: `MyApp.HomeViewController`, `UIHostingController<...>`)
-2. 제너릭 `<...>` 제거 → `UIHostingController`
-3. 모듈 프리픽스 제거 → `HomeViewController`
-4. 결과가 Apple 프레임워크 베이스 클래스(`UIViewController`, `UINavigationController`, `UITabBarController`, `UIHostingController` 등)면 nil 반환 → 라벨 자동 숨김
-
-→ 화면에 보이는 이름은 항상 사용자 코드의 심볼이라 grep 또는 Xcode `Open Quickly`(⇧⌘O)로 즉시 파일 발견 가능
+- **verticalPosition**: Vertical position of the overlay (`.top` / `.bottom`)
+  Horizontal position is fixed: viewController on the left, route on the right
 
 <br>
 
-## Android 라이브러리와의 대응
+## How it works
 
-| Android | iOS |
-|---|---|
-| `Activity` | `UIViewController` |
-| `Fragment` | child `UIViewController` |
-| `BottomSheetFragment` | sheet (`.pageSheet` / `.formSheet` / SwiftUI `.sheet`) |
-| `DialogFragment` | `UIAlertController` / 커스텀 modal |
-| `Compose Screen / Route` | SwiftUI `NavigationStack` route |
-| `initScreenNameViewer { ... }` | `ScreenNameViewer.start { ... }` |
-| `ScreenNameTracker(navController)` | `.trackScreenName(path:)` |
+The name shown in the overlay is normalized to always be a symbol from the user's own codebase:
+
+1. `String(describing: type(of: vc))` → full name (e.g., `MyApp.HomeViewController`, `UIHostingController<...>`)
+2. Strip generic `<...>` parameters → `UIHostingController`
+3. Strip module prefix → `HomeViewController`
+4. Returns `nil` if the result is an Apple framework base class (`UIViewController`, `UINavigationController`, `UITabBarController`, `UIHostingController`, etc.) — the label is auto-hidden
+
+→ The text shown in the overlay is always grep-able. Use `Open Quickly` (⇧⌘O) or grep to jump straight to the file.
 
 <br>
 
-## 샘플 앱
+## Sample app
 
-레포 내부에 데모 앱이 포함되어 있습니다:
+A demo app is included in the repository:
 
 - **SwiftUI**: Basic / Deep Navigation / Sheet / Full-Screen Cover / TabView
 - **UIKit**: `UINavigationController` / `UITabBarController` / Modal / Container ViewController
 
-`ScreenNameViewer-For-iOS.xcodeproj`를 열고 실행하시면 각 케이스에서 라이브러리가 어떻게 동작하는지 확인할 수 있습니다.
+Open `ScreenNameViewer-For-iOS.xcodeproj` and run to see the library in action across each case.
 
 <br>
 
-## 기여자
+## Contributors
 
 <!-- readme: collaborators,contributors -start -->
 <table>
