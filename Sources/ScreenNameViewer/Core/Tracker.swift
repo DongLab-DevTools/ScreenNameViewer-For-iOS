@@ -53,6 +53,7 @@ final class Tracker {
 
     func handleViewDidAppear(_ vc: UIViewController) {
         guard isRunning, !(vc is OverlayViewController) else { return }
+        guard Tracker.isScreenLevel(vc) else { return }
         vcStack.push(vc)
         scheduleRender()
     }
@@ -61,6 +62,17 @@ final class Tracker {
         guard isRunning, !(vc is OverlayViewController) else { return }
         vcStack.remove(vc)
         scheduleRender()
+    }
+
+    /// "화면 단위" VC 판정 — `parent` 가 없거나(window root / modal) 표준 컨테이너인 경우만 화면
+    /// 일반 VC 안에 박힌 child(예: `UIViewController` 가 임베드한 `UIHostingController`)는 그 화면의
+    /// 일부일 뿐이므로 스택에 올리지 않음 — top 이 child 로 덮여 부모 라벨이 가려지는 걸 방지
+    private static func isScreenLevel(_ vc: UIViewController) -> Bool {
+        guard let parent = vc.parent else { return true }
+        return parent is UINavigationController
+            || parent is UITabBarController
+            || parent is UISplitViewController
+            || parent is UIPageViewController
     }
 
     func setRoute(id: UUID, name: String?) {
