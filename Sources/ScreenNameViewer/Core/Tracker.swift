@@ -117,7 +117,7 @@ final class Tracker {
             return vcStack.top
         }
         return vcStack.topMatching { vc in
-            VCNameFormatter.names(for: vc) != nil
+            VCNameFormatter.displayName(for: vc) != nil
                 || SwiftUIIntrospection.extractRootName(from: vc) != nil
         } ?? vcStack.top
     }

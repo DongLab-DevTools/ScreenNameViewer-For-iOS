@@ -10,10 +10,6 @@ final class OverlayViewController: UIViewController {
     private let routeLabel = PaddedLabel()
     private let toastLabel = ToastLabel()
 
-    // 탭 시 토스트로 표시할 풀네임 보관
-    private var vcFullName: String?
-    private var introspectedFullName: String?
-    private var routeFullName: String?
     private var toastDismissWorkItem: DispatchWorkItem?
 
     private var verticalConstraints: [NSLayoutConstraint] = []
@@ -67,17 +63,11 @@ final class OverlayViewController: UIViewController {
 
     func update(
         vcDisplay: String?,
-        vcFull: String?,
         introspectedDisplay: String?,
-        introspectedFull: String?,
         routeName: String?,
         configuration: Configuration
     ) {
         applyVerticalPositionIfNeeded(configuration.verticalPosition)
-
-        vcFullName = vcFull
-        introspectedFullName = introspectedFull
-        routeFullName = routeName
 
         if configuration.viewController.enabled, let name = vcDisplay, !name.isEmpty {
             vcLabel.apply(text: name, style: configuration.viewController)
@@ -105,20 +95,24 @@ final class OverlayViewController: UIViewController {
         }
     }
 
-    /// 윈도우 좌표의 탭 위치 — 라벨 영역 안이면 해당 풀네임을 토스트로 표시
+    /// 윈도우 좌표의 탭 위치 — 라벨 영역 안이면 그 라벨에 표시된 이름을 토스트로 그대로 노출
     func handlePotentialLabelTap(at pointInWindow: CGPoint) {
-        let pointInView = view.convert(pointInWindow, from: nil)
-        if !vcLabel.isHidden, let name = vcFullName, vcLabel.frame.contains(pointInView) {
-            showToast(name)
-            return
+        for label in [vcLabel, introspectedLabel, routeLabel] {
+            if !label.isHidden,
+               let text = label.text,
+               !text.isEmpty,
+               contains(label: label, pointInWindow: pointInWindow) {
+                showToast(text)
+                return
+            }
         }
-        if !introspectedLabel.isHidden, let name = introspectedFullName, introspectedLabel.frame.contains(pointInView) {
-            showToast(name)
-            return
-        }
-        if !routeLabel.isHidden, let name = routeFullName, routeLabel.frame.contains(pointInView) {
-            showToast(name)
-        }
+    }
+
+    /// 라벨이 중첩 superview (UIStackView 등) 안에 있어도 작동하도록 라벨 자신의 좌표계로
+    /// 변환해 bounds 검사 — `label.frame` 은 부모 좌표계라 view 좌표 비교 시 빗나감
+    private func contains(label: UIView, pointInWindow: CGPoint) -> Bool {
+        let pointInLabel = label.convert(pointInWindow, from: nil)
+        return label.bounds.contains(pointInLabel)
     }
 
     private func showToast(_ text: String) {
