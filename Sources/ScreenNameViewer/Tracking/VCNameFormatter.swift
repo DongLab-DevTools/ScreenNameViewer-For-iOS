@@ -8,7 +8,11 @@ import UIKit
 /// SwiftUI 화면은 `.trackScreenName(...)`이 라우트 이름 제공 전제
 enum VCNameFormatter {
 
+    /// 사용자 코드에서 grep 가능한 심볼이 아닌 framework base / SwiftUI internal 클래스명들.
+    /// `String(describing: type(of: vc))` 의 모듈 prefix·제너릭 제거 후 짧은 이름이 여기 매칭되면
+    /// vc 라벨 노출 안 함 (라이브러리 정책: 표시되는 라벨은 항상 프로젝트 코드에서 찾을 수 있어야 함)
     private static let frameworkBaseClasses: Set<String> = [
+        // UIKit base classes
         "UIViewController",
         "UINavigationController",
         "UITabBarController",
@@ -20,6 +24,10 @@ enum VCNameFormatter {
         "UIDocumentPickerViewController",
         "UIImagePickerController",
         "UISearchController",
+        // SwiftUI internal hosts — 사용자 프로젝트에서 검색해도 못 찾는 SwiftUI 내부 클래스
+        "NavigationStackHostingController",
+        "PresentationHostingController",
+        "UIKitNavigationController",
     ]
 
     /// `display`: 라벨용 짧은 이름
@@ -31,31 +39,22 @@ enum VCNameFormatter {
 
     static func names(for vc: UIViewController) -> Names? {
         let raw = String(describing: type(of: vc))
-        let short = shortName(fromRaw: raw)
+        var short = raw
+
+        // `UIHostingController<NavigationStack<…>>` → `UIHostingController`
+        if let lt = short.firstIndex(of: "<") {
+            short = String(short[..<lt])
+        }
+
+        // `MyApp.HomeViewController` → `HomeViewController`
+        if let dot = short.lastIndex(of: ".") {
+            short = String(short[short.index(after: dot)...])
+        }
 
         if short.isEmpty || frameworkBaseClasses.contains(short) {
             return nil
         }
         return Names(display: short, full: raw)
-    }
-
-    /// 모듈 prefix와 제너릭 인자를 제거한 짧은 클래스명만 반환
-    /// `Configuration.excludedClassNames` 매칭처럼 프레임워크 베이스 필터링 전 단계에서 쓰임
-    static func shortName(for vc: UIViewController) -> String {
-        shortName(fromRaw: String(describing: type(of: vc)))
-    }
-
-    private static func shortName(fromRaw raw: String) -> String {
-        var short = raw
-        // `UIHostingController<NavigationStack<…>>` → `UIHostingController`
-        if let lt = short.firstIndex(of: "<") {
-            short = String(short[..<lt])
-        }
-        // `MyApp.HomeViewController` → `HomeViewController`
-        if let dot = short.lastIndex(of: ".") {
-            short = String(short[short.index(after: dot)...])
-        }
-        return short
     }
 }
 #endif

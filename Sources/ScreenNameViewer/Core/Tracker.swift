@@ -52,20 +52,15 @@ final class Tracker {
     }
 
     func handleViewDidAppear(_ vc: UIViewController) {
-        guard isRunning, !(vc is OverlayViewController), !isExcluded(vc) else { return }
+        guard isRunning, !(vc is OverlayViewController) else { return }
         vcStack.push(vc)
         scheduleRender()
     }
 
     func handleViewDidDisappear(_ vc: UIViewController) {
-        guard isRunning, !(vc is OverlayViewController), !isExcluded(vc) else { return }
+        guard isRunning, !(vc is OverlayViewController) else { return }
         vcStack.remove(vc)
         scheduleRender()
-    }
-
-    private func isExcluded(_ vc: UIViewController) -> Bool {
-        guard !configuration.excludedClassNames.isEmpty else { return false }
-        return configuration.excludedClassNames.contains(VCNameFormatter.shortName(for: vc))
     }
 
     func setRoute(id: UUID, name: String?) {
@@ -83,18 +78,29 @@ final class Tracker {
     private func scheduleRender() {
         renderScheduler.schedule { [weak self] in
             guard let self, self.isRunning else { return }
+            let routeName = self.routes.current
             self.overlays.render(
-                viewController: self.resolveDisplayVC(),
-                routeName: self.routes.current,
+                viewController: self.resolveDisplayVC(routeName: routeName),
+                routeName: routeName,
                 configuration: self.configuration
             )
         }
     }
 
-    /// 라벨 표시용 VC 결정 — 위에서부터 내려가며 `VCNameFormatter`가 이름을 뽑아주는 첫 VC 사용
-    /// 모두 익명(예: SwiftUI 내부 호스트만 쌓인 상태)이면 `top`을 그대로 돌려줘 기존 동작 유지
-    private func resolveDisplayVC() -> UIViewController? {
-        vcStack.topMatching { VCNameFormatter.names(for: $0) != nil } ?? vcStack.top
+    /// 표시할 VC 결정:
+    /// - route 가 설정된 상태(push 등 깊이 들어간 상태): top VC 만 사용. 그 밑으로 내려가면
+    ///   잘못된 outer 화면(예: 루트 ContentView)이 노출되어 사용자 혼동.
+    /// - route 없음(루트): top 이 표시 가능한 이름을 못 주면 스택을 내려가며 이름이 나오는
+    ///   첫 VC 사용. 예: 루트에 SwiftUI NavigationStack 두면 top 이 SwiftUI 내부 호스트라
+    ///   이름 못 주는데, 그 밑의 외곽 UIHostingController 의 introspection 으로 ContentView 노출.
+    private func resolveDisplayVC(routeName: String?) -> UIViewController? {
+        if routeName != nil {
+            return vcStack.top
+        }
+        return vcStack.topMatching { vc in
+            VCNameFormatter.names(for: vc) != nil
+                || SwiftUIIntrospection.extractRootName(from: vc) != nil
+        } ?? vcStack.top
     }
 }
 #endif

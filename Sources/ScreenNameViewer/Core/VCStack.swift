@@ -33,8 +33,9 @@ struct VCStack {
         return nil
     }
 
-    /// `predicate`가 true를 반환하는 첫 살아있는 VC를 위에서부터 찾아 반환
-    /// — 이름 없는 SwiftUI 내부 호스트가 위에 쌓여도 그 밑의 의미있는 VC를 라벨에 노출하기 위해 사용
+    /// `predicate` 가 true 인 첫 살아있는 VC 를 위에서부터 찾아 반환
+    /// — 위쪽 SwiftUI 내부 호스트들이 표시 가능한 이름을 못 줄 때, 그 밑의 outer host
+    /// (예: ContentView 의 UIHostingController) 까지 내려가 이름을 노출하기 위해 사용
     func topMatching(_ predicate: (UIViewController) -> Bool) -> UIViewController? {
         for entry in entries.reversed() {
             if let vc = entry.value, predicate(vc) { return vc }
