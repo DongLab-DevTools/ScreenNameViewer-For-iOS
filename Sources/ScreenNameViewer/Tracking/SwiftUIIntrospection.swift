@@ -17,13 +17,8 @@ enum SwiftUIIntrospection {
     private static let maxDepth = 8
 
     /// SwiftUI 호스트가 의심되는 `vc` 의 내부 root view 에서 첫 사용자 타입명을 추출
-    /// 못 찾으면 nil. `source` 는 어떤 fully-qualified 타입에서 뽑혔는지 — long-press 토스트 등 진단용
-    struct Extracted {
-        let display: String
-        let source: String
-    }
-
-    static func extractRootName(from vc: UIViewController) -> Extracted? {
+    /// 못 찾으면 nil
+    static func extractRootName(from vc: UIViewController) -> String? {
         guard let host = findChild(of: vc, named: "host", maxClassDepth: 6) else { return nil }
         guard let rootView = findChild(of: host, named: "_rootView", maxClassDepth: 3)
             ?? findChild(of: host, named: "rootView", maxClassDepth: 3) else { return nil }
@@ -48,7 +43,7 @@ enum SwiftUIIntrospection {
     /// `view` (보통 SwiftUI View 구조체) 의 타입명을 파싱해서 첫 사용자 타입명 반환
     /// `AnyView` 면 그 안의 `storage` 의 제너릭 파라미터까지 파고듦
     /// 깊이 제한 도달하거나 사용자 타입 못 찾으면 nil
-    private static func firstUserType(in view: Any, depth: Int) -> Extracted? {
+    private static func firstUserType(in view: Any, depth: Int) -> String? {
         guard depth < maxDepth else { return nil }
 
         // `String(reflecting:)` 은 `String(describing:)` 와 달리 fully-qualified 타입명을 줌
@@ -63,7 +58,7 @@ enum SwiftUIIntrospection {
         }
 
         if let user = firstUserType(inQualifiedTypeName: typeName) {
-            return Extracted(display: user, source: typeName)
+            return user
         }
 
         // view 가 컨테이너성 (AnyView, ModifiedContent 등) 일 가능성 — 자식 탐색
@@ -74,7 +69,7 @@ enum SwiftUIIntrospection {
                 continue
             }
             if let user = firstUserType(inQualifiedTypeName: childTypeName) {
-                return Extracted(display: user, source: childTypeName)
+                return user
             }
             if shouldRecurse(into: child.label) {
                 if let user = firstUserType(in: child.value, depth: depth + 1) {

@@ -10,10 +10,6 @@ final class OverlayViewController: UIViewController {
     private let routeLabel = PaddedLabel()
     private let toastLabel = ToastLabel()
 
-    // 탭 시 토스트로 표시할 풀네임 보관
-    private var vcFullName: String?
-    private var introspectedFullName: String?
-    private var routeFullName: String?
     private var toastDismissWorkItem: DispatchWorkItem?
 
     private var verticalConstraints: [NSLayoutConstraint] = []
@@ -67,17 +63,11 @@ final class OverlayViewController: UIViewController {
 
     func update(
         vcDisplay: String?,
-        vcFull: String?,
         introspectedDisplay: String?,
-        introspectedFull: String?,
         routeName: String?,
         configuration: Configuration
     ) {
         applyVerticalPositionIfNeeded(configuration.verticalPosition)
-
-        vcFullName = vcFull
-        introspectedFullName = introspectedFull
-        routeFullName = routeName
 
         if configuration.viewController.enabled, let name = vcDisplay, !name.isEmpty {
             vcLabel.apply(text: name, style: configuration.viewController)
@@ -105,18 +95,16 @@ final class OverlayViewController: UIViewController {
         }
     }
 
-    /// 윈도우 좌표의 탭 위치 — 라벨 영역 안이면 해당 풀네임을 토스트로 표시
+    /// 윈도우 좌표의 탭 위치 — 라벨 영역 안이면 그 라벨에 표시된 이름을 토스트로 그대로 노출
     func handlePotentialLabelTap(at pointInWindow: CGPoint) {
-        if !vcLabel.isHidden, let name = vcFullName, contains(label: vcLabel, pointInWindow: pointInWindow) {
-            showToast(name)
-            return
-        }
-        if !introspectedLabel.isHidden, let name = introspectedFullName, contains(label: introspectedLabel, pointInWindow: pointInWindow) {
-            showToast(name)
-            return
-        }
-        if !routeLabel.isHidden, let name = routeFullName, contains(label: routeLabel, pointInWindow: pointInWindow) {
-            showToast(name)
+        for label in [vcLabel, introspectedLabel, routeLabel] {
+            if !label.isHidden,
+               let text = label.text,
+               !text.isEmpty,
+               contains(label: label, pointInWindow: pointInWindow) {
+                showToast(text)
+                return
+            }
         }
     }
 
