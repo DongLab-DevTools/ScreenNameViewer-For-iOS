@@ -200,6 +200,10 @@ ScreenNameViewer.start { config in
 
     // 수직 위치 (top / bottom). 수평 위치는 좌/우 고정
     config.verticalPosition = .top
+
+    // 항상 떠있는 chrome 류 child VC (예: mini-player) 는 추적에서 제외해
+    // 본래 화면의 라벨이 그대로 유지되도록
+    config.excludedClassNames = ["MiniPlayerChromeViewController"]
 }
 ```
 
@@ -217,6 +221,8 @@ ScreenNameViewer.start { config in
 
 - **verticalPosition**: 오버레이의 수직 위치 (`.top` / `.bottom`)
   수평 위치는 좌측(viewController) / 우측(route) 고정
+
+- **excludedClassNames**: 추적에서 제외할 `UIViewController` 클래스명 (모듈 prefix 와 제너릭 인자 제외한 짧은 이름). 항상 떠있는 mini-player 류 chrome child VC 가 본래 화면 라벨을 덮어쓰지 않도록 막을 때 사용
 
 <br>
 

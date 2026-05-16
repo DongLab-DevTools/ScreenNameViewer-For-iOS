@@ -30,6 +30,7 @@ struct ContentView: View {
                     row("UITabBarController",      icon: "rectangle.bottomthird.inset.filled",          value: .uikitTabBarController)
                     row("Modal Presentation",      icon: "rectangle.center.inset.filled",               value: .uikitModalPresentation)
                     row("Container ViewController", icon: "square.split.2x1",        value: .uikitContainerViewController)
+                    row("Mini-Chrome Host (excluded child)", icon: "rectangle.dashed", value: .uikitMiniChromeHost)
                 }
             }
             .navigationTitle("ScreenNameViewer")
@@ -99,6 +100,11 @@ struct ContentView: View {
         case .uikitContainerViewController:
             UIKitContainerDemo()
                 .navigationTitle("Container ViewController")
+                .navigationBarTitleDisplayMode(.inline)
+        case .uikitMiniChromeHost:
+            MiniChromeHostDemo()
+                .ignoresSafeArea()
+                .navigationTitle("Mini-Chrome Host")
                 .navigationBarTitleDisplayMode(.inline)
         }
     }

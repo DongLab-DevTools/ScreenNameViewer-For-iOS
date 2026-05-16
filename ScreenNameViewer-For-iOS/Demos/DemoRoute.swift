@@ -18,4 +18,5 @@ enum DemoRoute: Hashable {
     case uikitTabBarController
     case uikitModalPresentation
     case uikitContainerViewController
+    case uikitMiniChromeHost
 }
