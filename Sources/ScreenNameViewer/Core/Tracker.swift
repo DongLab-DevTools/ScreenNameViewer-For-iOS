@@ -64,15 +64,22 @@ final class Tracker {
         scheduleRender()
     }
 
-    /// "화면 단위" VC 판정 — `parent` 가 없거나(window root / modal) 표준 컨테이너인 경우만 화면
-    /// 일반 VC 안에 박힌 child(예: `UIViewController` 가 임베드한 `UIHostingController`)는 그 화면의
-    /// 일부일 뿐이므로 스택에 올리지 않음 — top 이 child 로 덮여 부모 라벨이 가려지는 걸 방지
+    /// "화면 단위" VC 판정 — 두 조건 모두 만족해야 화면
+    /// 1. 자신이 컨테이너(`UINavigationController` 등) 가 아님 — 컨테이너 자체는 그 안의 visible child 가
+    ///    실제 화면이므로 라벨에 적합하지 않음. 사용자 서브클래스 (`BaseNavigationController` 등) 도 차단
+    /// 2. `parent` 가 없거나 (window root / modal) 표준 컨테이너 — 일반 VC 안에 박힌 child
+    ///    (예: `UIHostingController` 를 임베드한 child VC) 는 부모 화면의 일부일 뿐이므로 제외
     private static func isScreenLevel(_ vc: UIViewController) -> Bool {
+        if isContainer(vc) { return false }
         guard let parent = vc.parent else { return true }
-        return parent is UINavigationController
-            || parent is UITabBarController
-            || parent is UISplitViewController
-            || parent is UIPageViewController
+        return isContainer(parent)
+    }
+
+    private static func isContainer(_ vc: UIViewController) -> Bool {
+        vc is UINavigationController
+            || vc is UITabBarController
+            || vc is UISplitViewController
+            || vc is UIPageViewController
     }
 
     func setRoute(id: UUID, name: String?) {

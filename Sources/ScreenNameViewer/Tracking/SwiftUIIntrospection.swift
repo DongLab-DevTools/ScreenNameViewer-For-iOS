@@ -16,24 +16,6 @@ enum SwiftUIIntrospection {
 
     private static let maxDepth = 8
 
-    /// Apple/Swift 프레임워크 모듈. `String(reflecting:)` 가 돌려주는 fully-qualified
-    /// 타입명 (`SwiftUI.AnyViewStorage<...>`) 에서 모듈이 여기 속하면 사용자 타입이 아님.
-    /// 새 SwiftUI 내부 타입이 추가돼도 이 list 는 그대로 — Apple 이 프레임워크 모듈명을 바꾸지 않는 한.
-    private static let frameworkModules: Set<String> = [
-        "Swift",
-        "SwiftUI",
-        "UIKit",
-        "Foundation",
-        "Combine",
-        "CoreFoundation",
-        "CoreGraphics",
-        "QuartzCore",
-        "ObjectiveC",
-        "Darwin",
-        "Dispatch",
-        "os",
-    ]
-
     /// SwiftUI 호스트가 의심되는 `vc` 의 내부 root view 에서 첫 사용자 타입명을 추출
     /// 못 찾으면 nil. `source` 는 어떤 fully-qualified 타입에서 뽑혔는지 — long-press 토스트 등 진단용
     struct Extracted {
@@ -150,7 +132,7 @@ enum SwiftUIIntrospection {
             if chain.count >= 2 {
                 let module = chain[0]
                 if !module.hasPrefix("_"),
-                   !frameworkModules.contains(module) {
+                   !FrameworkModules.names.contains(module) {
                     return chain[1]
                 }
             }
