@@ -224,10 +224,6 @@ ScreenNameViewer.start { config in
 
 - **excludedClassNames**: 추적에서 제외할 `UIViewController` 클래스명 (모듈 prefix 와 제너릭 인자 제외한 짧은 이름). 항상 떠있는 mini-player 류 chrome child VC 가 본래 화면 라벨을 덮어쓰지 않도록 막을 때 사용
 
-### 익명 top VC fallback 동작
-
-스택 top 의 VC 가 표시 이름을 못 뽑는 경우 (iOS 26+ SwiftUI 의 `PresentationHostingController<AnyView>` 같이 type-erase 된 호스트) 그 아래에서 가장 가까운 named VC 로 fallback. SwiftUI `.fullScreenCover` / `.sheet` 에 `.trackScreenName(...)` 안 붙여도 직전 화면의 라벨이 그대로 유지됨.
-
 <br>
 
 ## 동작 원리

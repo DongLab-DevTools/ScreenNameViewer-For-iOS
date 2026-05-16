@@ -223,10 +223,6 @@ ScreenNameViewer.start { config in
 
 - **excludedClassNames**: Short class names (no module prefix, no generic params) of `UIViewController`s to skip when tracking. Useful for persistent chrome-like child VCs (e.g., a mini-player) that would otherwise override the underlying screen's label
 
-### Fallback behavior for unnameable VCs
-
-When the top VC of the stack produces no meaningful name (typical for SwiftUI internal hosts like `PresentationHostingController<AnyView>` on iOS 26+), the overlay falls back to the closest VC underneath that does have a name — so a SwiftUI `.fullScreenCover` or `.sheet` without `.trackScreenName(...)` keeps the prior screen's label visible instead of going blank.
-
 <br>
 
 ## How it works
