@@ -137,6 +137,22 @@ struct ContentView: View {
 }
 ```
 
+When `NavigationStack` has no path but uses `NavigationLink(value:)`, use the wrapper instead of `navigationDestination`. It receives the destination value and builds the screen name automatically.
+
+```swift
+NavigationStack {
+    VStack {
+        NavigationLink("Go to screen 1", value: "1")
+        NavigationLink("Go to screen 2", value: "2")
+    }
+    .navigationDestinationWithScreenName(for: String.self) { value in
+        Text("This is screen number \(value)")
+    }
+}
+```
+
+Overlay example: `ContentView.swift : value: 1`
+
 #### 3. Sheet / Tab / Cover — explicit tracking
 
 For screens outside the NavigationStack path, declare the name explicitly:

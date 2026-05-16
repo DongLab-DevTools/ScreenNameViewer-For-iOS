@@ -20,6 +20,28 @@ public extension View {
     func trackScreenName(_ routeName: String?) -> some View {
         modifier(_TrackScreenNameModifier(routeName: routeName))
     }
+
+    /// `NavigationStack` path 없이 `NavigationLink(value:)`를 쓰는 화면의 destination 이름을 자동 표시
+    ///
+    /// destination closure가 받은 value를 이용해 `"File.swift : value: ..."` 형식의 라우트 이름을 만듦
+    ///
+    /// RELEASE 빌드에서 내부 `.trackScreenName`이 무효
+    func navigationDestinationWithScreenName<D, C>(
+        for data: D.Type,
+        fileID: StaticString = #fileID,
+        @ViewBuilder destination: @escaping (D) -> C
+    ) -> some View where D: Hashable, C: View {
+        let screenFile = _screenFileName(fileID)
+        return navigationDestination(for: data) { value in
+            destination(value)
+                .trackScreenName("\(screenFile) : value: \(value)")
+        }
+    }
+}
+
+private func _screenFileName(_ fileID: StaticString) -> String {
+    let raw = "\(fileID)"
+    return raw.split(separator: "/").last.map(String.init) ?? raw
 }
 
 private struct _TrackScreenNameModifier: ViewModifier {

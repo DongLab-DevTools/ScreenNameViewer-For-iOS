@@ -9,6 +9,7 @@ import ScreenNameViewer
 struct ContentView: View {
 
     @State private var path: [DemoRoute] = []
+    @State private var showPathlessValueDemo = false
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -16,6 +17,9 @@ struct ContentView: View {
                 Section("SwiftUI") {
                     row("Basic NavigationStack",   icon: "arrow.right.circle",       value: .swiftUIBasicNavigation)
                     row("Deep NavigationStack",    icon: "square.stack.3d.up",       value: .swiftUIDeepNavigation)
+                    sheetRow("Pathless Value Navigation (sheet)", icon: "chevron.right.2") {
+                        showPathlessValueDemo = true
+                    }
                     row("Sheet",                   icon: "rectangle.portrait.bottomthird.inset.filled", value: .swiftUISheet)
                     row("Full-Screen Cover",       icon: "rectangle.fill.on.rectangle.fill",            value: .swiftUIFullScreenCover)
                     row("TabView + Tabs",          icon: "square.grid.2x2",          value: .swiftUITabbed)
@@ -34,12 +38,29 @@ struct ContentView: View {
             }
         }
         .trackScreenName(path: path)
+        .sheet(isPresented: $showPathlessValueDemo) {
+            PathlessValueNavigationDemo()
+        }
     }
 
     private func row(_ title: String, icon: String, value: DemoRoute) -> some View {
         NavigationLink(value: value) {
             Label(title, systemImage: icon)
         }
+    }
+
+    private func sheetRow(_ title: String, icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack {
+                Label(title, systemImage: icon)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder

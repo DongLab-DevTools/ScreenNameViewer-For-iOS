@@ -137,6 +137,22 @@ struct ContentView: View {
 }
 ```
 
+`NavigationStack`에 path는 없지만 `NavigationLink(value:)`를 쓰는 경우에는 `navigationDestination` 대신 wrapper를 사용합니다. destination closure가 받은 value로 화면 이름을 자동 생성합니다.
+
+```swift
+NavigationStack {
+    VStack {
+        NavigationLink("Go to screen 1", value: "1")
+        NavigationLink("Go to screen 2", value: "2")
+    }
+    .navigationDestinationWithScreenName(for: String.self) { value in
+        Text("This is screen number \(value)")
+    }
+}
+```
+
+오버레이 예: `ContentView.swift : value: 1`
+
 #### 3. 시트 / 탭 / Cover — 명시적 라우트
 
 `NavigationStack` path 밖에 있는 화면은 별도로 명시합니다.
