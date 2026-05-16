@@ -52,15 +52,20 @@ final class Tracker {
     }
 
     func handleViewDidAppear(_ vc: UIViewController) {
-        guard isRunning, !(vc is OverlayViewController) else { return }
+        guard isRunning, !(vc is OverlayViewController), !isExcluded(vc) else { return }
         vcStack.push(vc)
         scheduleRender()
     }
 
     func handleViewDidDisappear(_ vc: UIViewController) {
-        guard isRunning, !(vc is OverlayViewController) else { return }
+        guard isRunning, !(vc is OverlayViewController), !isExcluded(vc) else { return }
         vcStack.remove(vc)
         scheduleRender()
+    }
+
+    private func isExcluded(_ vc: UIViewController) -> Bool {
+        guard !configuration.excludedClassNames.isEmpty else { return false }
+        return configuration.excludedClassNames.contains(VCNameFormatter.shortName(for: vc))
     }
 
     func setRoute(id: UUID, name: String?) {
@@ -79,11 +84,17 @@ final class Tracker {
         renderScheduler.schedule { [weak self] in
             guard let self, self.isRunning else { return }
             self.overlays.render(
-                viewController: self.vcStack.top,
+                viewController: self.resolveDisplayVC(),
                 routeName: self.routes.current,
                 configuration: self.configuration
             )
         }
+    }
+
+    /// 라벨 표시용 VC 결정 — 위에서부터 내려가며 `VCNameFormatter`가 이름을 뽑아주는 첫 VC 사용
+    /// 모두 익명(예: SwiftUI 내부 호스트만 쌓인 상태)이면 `top`을 그대로 돌려줘 기존 동작 유지
+    private func resolveDisplayVC() -> UIViewController? {
+        vcStack.topMatching { VCNameFormatter.names(for: $0) != nil } ?? vcStack.top
     }
 }
 #endif

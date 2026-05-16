@@ -200,6 +200,9 @@ ScreenNameViewer.start { config in
 
     // Vertical position (top / bottom). Horizontal placement is fixed (left/right).
     config.verticalPosition = .top
+
+    // Exclude chrome-style child VCs (e.g., persistent mini-player) so they don't override the underlying screen label
+    config.excludedClassNames = ["MiniPlayerChromeViewController"]
 }
 ```
 
@@ -217,6 +220,12 @@ ScreenNameViewer.start { config in
 
 - **verticalPosition**: Vertical position of the overlay (`.top` / `.bottom`)
   Horizontal position is fixed: viewController on the left, route on the right
+
+- **excludedClassNames**: Short class names (no module prefix, no generic params) of `UIViewController`s to skip when tracking. Useful for persistent chrome-like child VCs (e.g., a mini-player) that would otherwise override the underlying screen's label
+
+### Fallback behavior for unnameable VCs
+
+When the top VC of the stack produces no meaningful name (typical for SwiftUI internal hosts like `PresentationHostingController<AnyView>` on iOS 26+), the overlay falls back to the closest VC underneath that does have a name — so a SwiftUI `.fullScreenCover` or `.sheet` without `.trackScreenName(...)` keeps the prior screen's label visible instead of going blank.
 
 <br>
 

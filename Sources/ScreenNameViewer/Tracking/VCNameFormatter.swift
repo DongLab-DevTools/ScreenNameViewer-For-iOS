@@ -31,22 +31,31 @@ enum VCNameFormatter {
 
     static func names(for vc: UIViewController) -> Names? {
         let raw = String(describing: type(of: vc))
-        var short = raw
-
-        // `UIHostingController<NavigationStack<…>>` → `UIHostingController`
-        if let lt = short.firstIndex(of: "<") {
-            short = String(short[..<lt])
-        }
-
-        // `MyApp.HomeViewController` → `HomeViewController`
-        if let dot = short.lastIndex(of: ".") {
-            short = String(short[short.index(after: dot)...])
-        }
+        let short = shortName(fromRaw: raw)
 
         if short.isEmpty || frameworkBaseClasses.contains(short) {
             return nil
         }
         return Names(display: short, full: raw)
+    }
+
+    /// 모듈 prefix와 제너릭 인자를 제거한 짧은 클래스명만 반환
+    /// `Configuration.excludedClassNames` 매칭처럼 프레임워크 베이스 필터링 전 단계에서 쓰임
+    static func shortName(for vc: UIViewController) -> String {
+        shortName(fromRaw: String(describing: type(of: vc)))
+    }
+
+    private static func shortName(fromRaw raw: String) -> String {
+        var short = raw
+        // `UIHostingController<NavigationStack<…>>` → `UIHostingController`
+        if let lt = short.firstIndex(of: "<") {
+            short = String(short[..<lt])
+        }
+        // `MyApp.HomeViewController` → `HomeViewController`
+        if let dot = short.lastIndex(of: ".") {
+            short = String(short[short.index(after: dot)...])
+        }
+        return short
     }
 }
 #endif
