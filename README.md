@@ -200,9 +200,6 @@ ScreenNameViewer.start { config in
 
     // Vertical position (top / bottom). Horizontal placement is fixed (left/right).
     config.verticalPosition = .top
-
-    // Exclude chrome-style child VCs (e.g., persistent mini-player) so they don't override the underlying screen label
-    config.excludedClassNames = ["MiniPlayerChromeViewController"]
 }
 ```
 
@@ -220,8 +217,6 @@ ScreenNameViewer.start { config in
 
 - **verticalPosition**: Vertical position of the overlay (`.top` / `.bottom`)
   Horizontal position is fixed: viewController on the left, route on the right
-
-- **excludedClassNames**: Short class names (no module prefix, no generic params) of `UIViewController`s to skip when tracking. Useful for persistent chrome-like child VCs (e.g., a mini-player) that would otherwise override the underlying screen's label
 
 <br>
 

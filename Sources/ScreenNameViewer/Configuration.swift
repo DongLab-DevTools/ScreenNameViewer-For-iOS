@@ -13,22 +13,14 @@ public struct Configuration {
     public var route: LabelStyle
     public var verticalPosition: VerticalPosition
 
-    /// 추적 대상에서 제외할 `UIViewController` 클래스명 집합
-    /// 예: 화면 위에 항상 떠있는 mini-player chrome 같은 child container를 제외해
-    ///     이전 화면의 라벨이 그대로 노출되도록 만들 때 사용
-    /// 매칭: `String(describing: type(of: vc))`의 모듈 prefix를 제거한 짧은 이름과 비교
-    public var excludedClassNames: Set<String>
-
     public init(
         viewController: LabelStyle = .defaultViewController,
         route: LabelStyle = .defaultRoute,
-        verticalPosition: VerticalPosition = .top,
-        excludedClassNames: Set<String> = []
+        verticalPosition: VerticalPosition = .top
     ) {
         self.viewController = viewController
         self.route = route
         self.verticalPosition = verticalPosition
-        self.excludedClassNames = excludedClassNames
     }
 
     public struct LabelStyle {

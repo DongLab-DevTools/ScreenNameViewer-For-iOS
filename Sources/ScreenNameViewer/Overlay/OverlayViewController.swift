@@ -5,11 +5,14 @@ import UIKit
 final class OverlayViewController: UIViewController {
 
     private let vcLabel = PaddedLabel()
+    private let introspectedLabel = PaddedLabel()
+    private let leftLabelStack = UIStackView()
     private let routeLabel = PaddedLabel()
     private let toastLabel = ToastLabel()
 
     // 탭 시 토스트로 표시할 풀네임 보관
     private var vcFullName: String?
+    private var introspectedFullName: String?
     private var routeFullName: String?
     private var toastDismissWorkItem: DispatchWorkItem?
 
@@ -25,12 +28,22 @@ final class OverlayViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        for label in [vcLabel, routeLabel] {
-            label.translatesAutoresizingMaskIntoConstraints = false
+        for label in [vcLabel, introspectedLabel, routeLabel] {
             label.setContentHuggingPriority(.defaultHigh, for: .horizontal)
             label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-            view.addSubview(label)
         }
+
+        // 좌측: vc / introspected 두 라벨을 stack 에 담아 hidden 시 자동 collapse
+        leftLabelStack.axis = .vertical
+        leftLabelStack.alignment = .leading
+        leftLabelStack.spacing = 2
+        leftLabelStack.translatesAutoresizingMaskIntoConstraints = false
+        leftLabelStack.addArrangedSubview(vcLabel)
+        leftLabelStack.addArrangedSubview(introspectedLabel)
+        view.addSubview(leftLabelStack)
+
+        routeLabel.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(routeLabel)
 
         toastLabel.translatesAutoresizingMaskIntoConstraints = false
         toastLabel.alpha = 0
@@ -38,12 +51,11 @@ final class OverlayViewController: UIViewController {
 
         let g = view.safeAreaLayoutGuide
 
-        // 수평 위치 고정 — vc 좌측 / route 우측, swap 불가
+        // 수평: stack 좌측 / route 우측
         NSLayoutConstraint.activate([
-            vcLabel.leadingAnchor.constraint(equalTo: g.leadingAnchor, constant: 8),
+            leftLabelStack.leadingAnchor.constraint(equalTo: g.leadingAnchor, constant: 8),
+            leftLabelStack.trailingAnchor.constraint(lessThanOrEqualTo: routeLabel.leadingAnchor, constant: -8),
             routeLabel.trailingAnchor.constraint(equalTo: g.trailingAnchor, constant: -8),
-            // 두 라벨 겹침 방지 — 충돌 직전에 어느 한 쪽 먼저 truncate
-            vcLabel.trailingAnchor.constraint(lessThanOrEqualTo: routeLabel.leadingAnchor, constant: -8),
 
             // 토스트 — 하단 중앙 고정, 좌우 16 패딩
             toastLabel.centerXAnchor.constraint(equalTo: g.centerXAnchor),
@@ -53,10 +65,18 @@ final class OverlayViewController: UIViewController {
         ])
     }
 
-    func update(vcDisplay: String?, vcFull: String?, routeName: String?, configuration: Configuration) {
+    func update(
+        vcDisplay: String?,
+        vcFull: String?,
+        introspectedDisplay: String?,
+        introspectedFull: String?,
+        routeName: String?,
+        configuration: Configuration
+    ) {
         applyVerticalPositionIfNeeded(configuration.verticalPosition)
 
         vcFullName = vcFull
+        introspectedFullName = introspectedFull
         routeFullName = routeName
 
         if configuration.viewController.enabled, let name = vcDisplay, !name.isEmpty {
@@ -64,6 +84,17 @@ final class OverlayViewController: UIViewController {
             vcLabel.isHidden = false
         } else {
             vcLabel.isHidden = true
+        }
+
+        // introspected 라벨은 vc 라벨과 다른 의미있는 이름을 얻었을 때만 노출
+        if configuration.viewController.enabled,
+           let name = introspectedDisplay,
+           !name.isEmpty,
+           name != vcDisplay {
+            introspectedLabel.apply(text: name, style: configuration.viewController)
+            introspectedLabel.isHidden = false
+        } else {
+            introspectedLabel.isHidden = true
         }
 
         if configuration.route.enabled, let name = routeName, !name.isEmpty {
@@ -78,6 +109,10 @@ final class OverlayViewController: UIViewController {
     func handlePotentialLabelTap(at pointInWindow: CGPoint) {
         let pointInView = view.convert(pointInWindow, from: nil)
         if !vcLabel.isHidden, let name = vcFullName, vcLabel.frame.contains(pointInView) {
+            showToast(name)
+            return
+        }
+        if !introspectedLabel.isHidden, let name = introspectedFullName, introspectedLabel.frame.contains(pointInView) {
             showToast(name)
             return
         }
@@ -116,10 +151,10 @@ final class OverlayViewController: UIViewController {
 
         switch vertical {
         case .top:
-            c.append(vcLabel.topAnchor.constraint(equalTo: g.topAnchor, constant: 4))
+            c.append(leftLabelStack.topAnchor.constraint(equalTo: g.topAnchor, constant: 4))
             c.append(routeLabel.topAnchor.constraint(equalTo: g.topAnchor, constant: 4))
         case .bottom:
-            c.append(vcLabel.bottomAnchor.constraint(equalTo: g.bottomAnchor, constant: -4))
+            c.append(leftLabelStack.bottomAnchor.constraint(equalTo: g.bottomAnchor, constant: -4))
             c.append(routeLabel.bottomAnchor.constraint(equalTo: g.bottomAnchor, constant: -4))
         }
 

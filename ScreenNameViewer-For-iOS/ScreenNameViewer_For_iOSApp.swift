@@ -16,10 +16,6 @@ struct ScreenNameViewer_For_iOSApp: App {
             // 선택 — 여기서 외형 커스터마이즈
             // config.viewController.textColor = .systemGreen
             // config.verticalPosition = .bottom
-
-            // mini-player chrome 류 (항상 떠있는 child VC) 는 추적에서 제외
-            // → 본래 화면의 라벨이 그대로 유지됨
-            config.excludedClassNames = ["MiniPlayerChromeViewController"]
         }
     }
 
