@@ -107,18 +107,24 @@ final class OverlayViewController: UIViewController {
 
     /// 윈도우 좌표의 탭 위치 — 라벨 영역 안이면 해당 풀네임을 토스트로 표시
     func handlePotentialLabelTap(at pointInWindow: CGPoint) {
-        let pointInView = view.convert(pointInWindow, from: nil)
-        if !vcLabel.isHidden, let name = vcFullName, vcLabel.frame.contains(pointInView) {
+        if !vcLabel.isHidden, let name = vcFullName, contains(label: vcLabel, pointInWindow: pointInWindow) {
             showToast(name)
             return
         }
-        if !introspectedLabel.isHidden, let name = introspectedFullName, introspectedLabel.frame.contains(pointInView) {
+        if !introspectedLabel.isHidden, let name = introspectedFullName, contains(label: introspectedLabel, pointInWindow: pointInWindow) {
             showToast(name)
             return
         }
-        if !routeLabel.isHidden, let name = routeFullName, routeLabel.frame.contains(pointInView) {
+        if !routeLabel.isHidden, let name = routeFullName, contains(label: routeLabel, pointInWindow: pointInWindow) {
             showToast(name)
         }
+    }
+
+    /// 라벨이 중첩 superview (UIStackView 등) 안에 있어도 작동하도록 라벨 자신의 좌표계로
+    /// 변환해 bounds 검사 — `label.frame` 은 부모 좌표계라 view 좌표 비교 시 빗나감
+    private func contains(label: UIView, pointInWindow: CGPoint) -> Bool {
+        let pointInLabel = label.convert(pointInWindow, from: nil)
+        return label.bounds.contains(pointInLabel)
     }
 
     private func showToast(_ text: String) {
