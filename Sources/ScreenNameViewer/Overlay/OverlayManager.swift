@@ -14,14 +14,14 @@ final class OverlayManager {
         }
     }
 
-    /// 현재 상태(vc + route)를 연결된 모든 씬의 오버레이에 적용
-    /// 단일 씬 앱에서는 그 한 씬만 갱신 대상, 멀티 씬 앱에서는 동일한 vc/route 값을 모든 씬에 일괄 적용
+    /// 현재 상태(snapshot + route)를 연결된 모든 씬의 오버레이에 적용
+    /// snapshot 은 Tracker 가 한 render 사이클에 한 번만 계산한 결과를 공유 — scene 별 introspection 재계산 방지
     func render(
-        viewController: UIViewController?,
+        snapshot: Tracker.DisplaySnapshot,
         routeName: String?,
         configuration: Configuration
     ) {
-        if let appWindow = viewController?.view.window, !(appWindow is OverlayWindow) {
+        if let appWindow = snapshot.viewController?.view.window, !(appWindow is OverlayWindow) {
             tapInstaller.installIfNeeded(on: appWindow)
         }
 
@@ -29,7 +29,9 @@ final class OverlayManager {
             guard let windowScene = scene as? UIWindowScene else { continue }
             let overlay = ensureOverlay(for: windowScene, configuration: configuration)
             overlay.update(
-                viewController: viewController,
+                vcDisplay: snapshot.vcDisplay,
+                childDisplay: snapshot.childDisplay,
+                introspectedDisplay: snapshot.introspectedDisplay,
                 routeName: routeName,
                 configuration: configuration
             )
@@ -94,21 +96,24 @@ final class OverlayManager {
     /// 첫 viewDidAppear 사이클 종료 후 `start()` 호출 시 트래커 시드 용도
     static func topVisibleViewController(in scene: UIWindowScene) -> UIViewController? {
         let candidate = scene.windows.first(where: \.isKeyWindow) ?? scene.windows.first
-        return candidate?.rootViewController?._snv_topMostViewController
+        return candidate?.rootViewController?._snv_topMostViewController()
     }
 }
 
 private extension UIViewController {
 
-    var _snv_topMostViewController: UIViewController {
+    /// `maxDepth` 는 UIKit 이 사이클을 허용하지 않지만 호스트 앱 버그로 presented 체인이
+    /// 순환할 경우 무한 재귀로 라이브러리가 크래시 내는 걸 방지하는 방어선
+    func _snv_topMostViewController(maxDepth: Int = 64) -> UIViewController {
+        guard maxDepth > 0 else { return self }
         if let presented = presentedViewController {
-            return presented._snv_topMostViewController
+            return presented._snv_topMostViewController(maxDepth: maxDepth - 1)
         }
         if let nav = self as? UINavigationController, let visible = nav.visibleViewController {
-            return visible._snv_topMostViewController
+            return visible._snv_topMostViewController(maxDepth: maxDepth - 1)
         }
         if let tab = self as? UITabBarController, let selected = tab.selectedViewController {
-            return selected._snv_topMostViewController
+            return selected._snv_topMostViewController(maxDepth: maxDepth - 1)
         }
         return self
     }

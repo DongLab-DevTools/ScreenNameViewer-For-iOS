@@ -4,11 +4,13 @@ import UIKit
 @MainActor
 final class OverlayViewController: UIViewController {
 
-    private let vcLabel = PaddedLabel()
-    private let introspectedLabel = PaddedLabel()
+    // 라벨들은 테스트에서 .text / .isHidden 확인 위해 internal — 외부 모듈에 노출되지는 않음
+    let vcLabel = PaddedLabel()
+    let childLabel = PaddedLabel()
+    let introspectedLabel = PaddedLabel()
     private let leftLabelStack = UIStackView()
-    private let routeLabel = PaddedLabel()
-    private let toastLabel = ToastLabel()
+    let routeLabel = PaddedLabel()
+    let toastLabel = ToastLabel()
 
     private var toastDismissWorkItem: DispatchWorkItem?
 
@@ -24,17 +26,18 @@ final class OverlayViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        for label in [vcLabel, introspectedLabel, routeLabel] {
+        for label in [vcLabel, childLabel, introspectedLabel, routeLabel] {
             label.setContentHuggingPriority(.defaultHigh, for: .horizontal)
             label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         }
 
-        // 좌측: vc / introspected 두 라벨을 stack 에 담아 hidden 시 자동 collapse
+        // 좌측: vc / child / introspected 세 라벨을 stack 에 담아 hidden 시 자동 collapse
         leftLabelStack.axis = .vertical
         leftLabelStack.alignment = .leading
         leftLabelStack.spacing = 2
         leftLabelStack.translatesAutoresizingMaskIntoConstraints = false
         leftLabelStack.addArrangedSubview(vcLabel)
+        leftLabelStack.addArrangedSubview(childLabel)
         leftLabelStack.addArrangedSubview(introspectedLabel)
         view.addSubview(leftLabelStack)
 
@@ -63,6 +66,7 @@ final class OverlayViewController: UIViewController {
 
     func update(
         vcDisplay: String?,
+        childDisplay: String?,
         introspectedDisplay: String?,
         routeName: String?,
         configuration: Configuration
@@ -76,11 +80,23 @@ final class OverlayViewController: UIViewController {
             vcLabel.isHidden = true
         }
 
-        // introspected 라벨은 vc 라벨과 다른 의미있는 이름을 얻었을 때만 노출
+        // child 라벨 — 부모 VC 안에 떠 있는 사용자 코드 child VC. vc 와 같으면 중복이므로 숨김
+        if configuration.viewController.enabled,
+           let name = childDisplay,
+           !name.isEmpty,
+           name != vcDisplay {
+            childLabel.apply(text: name, style: configuration.viewController)
+            childLabel.isHidden = false
+        } else {
+            childLabel.isHidden = true
+        }
+
+        // introspected 라벨 — SwiftUI 내부 사용자 View 타입. vc / child 라벨과 같으면 중복이므로 숨김
         if configuration.viewController.enabled,
            let name = introspectedDisplay,
            !name.isEmpty,
-           name != vcDisplay {
+           name != vcDisplay,
+           name != childDisplay {
             introspectedLabel.apply(text: name, style: configuration.viewController)
             introspectedLabel.isHidden = false
         } else {
@@ -97,7 +113,7 @@ final class OverlayViewController: UIViewController {
 
     /// 윈도우 좌표의 탭 위치 — 라벨 영역 안이면 그 라벨에 표시된 이름을 토스트로 그대로 노출
     func handlePotentialLabelTap(at pointInWindow: CGPoint) {
-        for label in [vcLabel, introspectedLabel, routeLabel] {
+        for label in [vcLabel, childLabel, introspectedLabel, routeLabel] {
             if !label.isHidden,
                let text = label.text,
                !text.isEmpty,
@@ -166,7 +182,7 @@ private final class PassthroughView: UIView {
 }
 
 @MainActor
-private final class PaddedLabel: UILabel {
+final class PaddedLabel: UILabel {
 
     private var contentInsets = UIEdgeInsets(top: 2, left: 6, bottom: 2, right: 6)
 
@@ -202,7 +218,7 @@ private final class PaddedLabel: UILabel {
 }
 
 @MainActor
-private final class ToastLabel: UILabel {
+final class ToastLabel: UILabel {
 
     private let contentInsets = UIEdgeInsets(top: 8, left: 12, bottom: 8, right: 12)
 

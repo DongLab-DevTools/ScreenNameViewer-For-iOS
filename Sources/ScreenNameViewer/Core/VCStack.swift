@@ -33,12 +33,13 @@ struct VCStack {
         return nil
     }
 
-    /// `predicate` 가 true 인 첫 살아있는 VC 를 위에서부터 찾아 반환
+    /// 위에서부터 살아있는 VC 를 순회하며 `transform` 결과가 non-nil 인 첫 값을 반환
     /// — 위쪽 SwiftUI 내부 호스트들이 표시 가능한 이름을 못 줄 때, 그 밑의 outer host
-    /// (예: ContentView 의 UIHostingController) 까지 내려가 이름을 노출하기 위해 사용
-    func topMatching(_ predicate: (UIViewController) -> Bool) -> UIViewController? {
+    /// (예: ContentView 의 UIHostingController) 까지 내려가 이름을 추출하기 위해 사용
+    /// transform 안에서 미리 계산한 라벨 값을 함께 담아 반환하면 호출측에서 재계산 불필요
+    func topMap<T>(_ transform: (UIViewController) -> T?) -> T? {
         for entry in entries.reversed() {
-            if let vc = entry.value, predicate(vc) { return vc }
+            if let vc = entry.value, let result = transform(vc) { return result }
         }
         return nil
     }
