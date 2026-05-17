@@ -14,8 +14,9 @@ final class Tracker {
     private(set) var configuration = Configuration()
 
     private let overlays = OverlayManager()
-    private var vcStack = VCStack()
-    private var routes = RouteRegistry()
+    // 테스트에서 push/remove 결과 검증 위해 internal — 외부 모듈에 노출되지는 않음
+    var vcStack = VCStack()
+    var routes = RouteRegistry()
     private let renderScheduler = RenderScheduler()
 
     private init() {}
@@ -69,13 +70,13 @@ final class Tracker {
     ///    실제 화면이므로 라벨에 적합하지 않음. 사용자 서브클래스 (`BaseNavigationController` 등) 도 차단
     /// 2. `parent` 가 없거나 (window root / modal) 표준 컨테이너 — 일반 VC 안에 박힌 child
     ///    (예: `UIHostingController` 를 임베드한 child VC) 는 부모 화면의 일부일 뿐이므로 제외
-    private static func isScreenLevel(_ vc: UIViewController) -> Bool {
+    static func isScreenLevel(_ vc: UIViewController) -> Bool {
         if isContainer(vc) { return false }
         guard let parent = vc.parent else { return true }
         return isContainer(parent)
     }
 
-    private static func isContainer(_ vc: UIViewController) -> Bool {
+    static func isContainer(_ vc: UIViewController) -> Bool {
         vc is UINavigationController
             || vc is UITabBarController
             || vc is UISplitViewController
@@ -130,7 +131,7 @@ final class Tracker {
     ///   이름 못 주는데, 그 밑의 외곽 UIHostingController 의 introspection 으로 ContentView 노출.
     ///
     /// snapshot 으로 라벨 값을 미리 담아 반환 — SceneOverlay 가 매 scene 마다 재계산하는 비용 제거
-    private func resolveDisplay(routeName: String?) -> DisplaySnapshot {
+    func resolveDisplay(routeName: String?) -> DisplaySnapshot {
         if routeName != nil {
             guard let top = vcStack.top else { return .empty }
             return makeSnapshot(for: top)
@@ -162,7 +163,7 @@ final class Tracker {
 
     /// VC 자신이 user 코드면 그대로, 아니면 visible children 을 깊이 따라가며 첫 user code VC 반환
     /// 예: UIViewControllerRepresentable 의 SwiftUI 내부 host → 그 안의 사용자 VC
-    private func findUserRoot(in vc: UIViewController) -> UIViewController? {
+    func findUserRoot(in vc: UIViewController) -> UIViewController? {
         if VCNameFormatter.displayName(for: vc) != nil {
             return vc
         }
@@ -178,7 +179,7 @@ final class Tracker {
     /// `parent` 안에 떠 있는 visible child 중 첫 사용자 코드 VC 이름
     /// Apple framework child 는 한 단계 더 내려가 그 안의 user code VC 찾기 시도
     /// 부모 자신 이름과 중복은 무시
-    private func visibleChildDisplay(of parent: UIViewController, excluding excludedName: String?) -> String? {
+    func visibleChildDisplay(of parent: UIViewController, excluding excludedName: String?) -> String? {
         for child in parent.children {
             guard child.viewIfLoaded?.window != nil else { continue }
             if let name = VCNameFormatter.displayName(for: child), name != excludedName {

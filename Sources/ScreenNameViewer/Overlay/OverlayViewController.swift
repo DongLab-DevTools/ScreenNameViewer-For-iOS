@@ -4,12 +4,13 @@ import UIKit
 @MainActor
 final class OverlayViewController: UIViewController {
 
-    private let vcLabel = PaddedLabel()
-    private let childLabel = PaddedLabel()
-    private let introspectedLabel = PaddedLabel()
+    // 라벨들은 테스트에서 .text / .isHidden 확인 위해 internal — 외부 모듈에 노출되지는 않음
+    let vcLabel = PaddedLabel()
+    let childLabel = PaddedLabel()
+    let introspectedLabel = PaddedLabel()
     private let leftLabelStack = UIStackView()
-    private let routeLabel = PaddedLabel()
-    private let toastLabel = ToastLabel()
+    let routeLabel = PaddedLabel()
+    let toastLabel = ToastLabel()
 
     private var toastDismissWorkItem: DispatchWorkItem?
 
@@ -181,7 +182,7 @@ private final class PassthroughView: UIView {
 }
 
 @MainActor
-private final class PaddedLabel: UILabel {
+final class PaddedLabel: UILabel {
 
     private var contentInsets = UIEdgeInsets(top: 2, left: 6, bottom: 2, right: 6)
 
@@ -217,7 +218,7 @@ private final class PaddedLabel: UILabel {
 }
 
 @MainActor
-private final class ToastLabel: UILabel {
+final class ToastLabel: UILabel {
 
     private let contentInsets = UIEdgeInsets(top: 8, left: 12, bottom: 8, right: 12)
 

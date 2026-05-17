@@ -94,7 +94,7 @@ enum SwiftUIIntrospection {
     /// 중요 — `SwiftUI.NavigationState.StackContent.Key` 같이 4단 nested 인 경우 모듈이 `SwiftUI`
     /// 이므로 **chain 전체를 한 덩어리로 스킵** 해야 함. 그렇지 않으면 `StackContent` 가 user 모듈로,
     /// `Key` 가 user 타입으로 잘못 추출됨.
-    private static func firstUserType(inQualifiedTypeName name: String) -> String? {
+    static func firstUserType(inQualifiedTypeName name: String) -> String? {
         var i = name.startIndex
         while i < name.endIndex {
             guard isIdentStart(name[i]) else {

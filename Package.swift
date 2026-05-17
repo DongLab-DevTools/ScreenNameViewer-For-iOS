@@ -16,5 +16,9 @@ let package = Package(
         .target(
             name: "ScreenNameViewer"
         ),
+        .testTarget(
+            name: "ScreenNameViewerTests",
+            dependencies: ["ScreenNameViewer"]
+        ),
     ]
 )
