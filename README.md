@@ -13,7 +13,10 @@
 ## Overview
 
 <!-- Sample image placeholder -->
-<!-- ![sample](.github/docs/images/screennameviewer-example.png) -->
+<img width="3000" alt="image" src="https://github.com/user-attachments/assets/84543cc6-74de-4bbe-bc4a-684171d0ffec" />
+
+<br>
+<br>
 
 ScreenNameViewer is a debugging tool that overlays the class name of the currently displayed screen.
 It allows you to intuitively check which screen is active, and in a SwiftUI environment, it can also display the `NavigationStack` route.
