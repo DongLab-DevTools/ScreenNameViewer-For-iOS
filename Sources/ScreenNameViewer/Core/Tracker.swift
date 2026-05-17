@@ -142,12 +142,16 @@ final class Tracker {
         return makeSnapshot(for: top)
     }
 
-    private func makeSnapshot(for vc: UIViewController) -> DisplaySnapshot {
-        DisplaySnapshot(
-            viewController: vc,
-            vcDisplay: VCNameFormatter.displayName(for: vc),
-            childDisplay: visibleChildDisplay(for: vc),
-            introspectedDisplay: SwiftUIIntrospection.extractRootName(from: vc)
+    private func makeSnapshot(for topVC: UIViewController) -> DisplaySnapshot {
+        // top 이 Apple framework (e.g. UIViewControllerRepresentable 의 내부 host) 면 children 을
+        // 따라 내려가 첫 사용자 코드 VC ("user root") 까지 도달. vcDisplay 는 그 user root 기준
+        let userRoot = findUserRoot(in: topVC) ?? topVC
+        let userRootName = VCNameFormatter.displayName(for: userRoot)
+        return DisplaySnapshot(
+            viewController: topVC,
+            vcDisplay: userRootName,
+            childDisplay: visibleChildDisplay(of: userRoot, excluding: userRootName),
+            introspectedDisplay: SwiftUIIntrospection.extractRootName(from: topVC)
         )
     }
 
@@ -156,18 +160,33 @@ final class Tracker {
         return (snap.vcDisplay != nil || snap.childDisplay != nil || snap.introspectedDisplay != nil) ? snap : nil
     }
 
-    /// 부모 VC 안에 임베드되어 화면에 떠 있는 첫 사용자 코드 child VC 의 이름
-    /// - `view.window != nil` — 현재 화면 계층에 실제로 붙어 있는 child 만
-    /// - `VCNameFormatter` 통과 — Apple framework 클래스 (예: `UIHostingController`) 는 자동 제외,
-    ///   사용자 정의 child 만 노출. UIHostingController 안의 SwiftUI View 는 `introspectedDisplay` 가 별도 처리.
-    /// - 중복 방지 — 부모 자신 이름과 같으면 무시
-    private func visibleChildDisplay(for parent: UIViewController) -> String? {
-        let parentName = VCNameFormatter.displayName(for: parent)
+    /// VC 자신이 user 코드면 그대로, 아니면 visible children 을 깊이 따라가며 첫 user code VC 반환
+    /// 예: UIViewControllerRepresentable 의 SwiftUI 내부 host → 그 안의 사용자 VC
+    private func findUserRoot(in vc: UIViewController) -> UIViewController? {
+        if VCNameFormatter.displayName(for: vc) != nil {
+            return vc
+        }
+        for child in vc.children {
+            guard child.viewIfLoaded?.window != nil else { continue }
+            if let found = findUserRoot(in: child) {
+                return found
+            }
+        }
+        return nil
+    }
+
+    /// `parent` 안에 떠 있는 visible child 중 첫 사용자 코드 VC 이름
+    /// Apple framework child 는 한 단계 더 내려가 그 안의 user code VC 찾기 시도
+    /// 부모 자신 이름과 중복은 무시
+    private func visibleChildDisplay(of parent: UIViewController, excluding excludedName: String?) -> String? {
         for child in parent.children {
             guard child.viewIfLoaded?.window != nil else { continue }
-            guard let name = VCNameFormatter.displayName(for: child) else { continue }
-            if name == parentName { continue }
-            return name
+            if let name = VCNameFormatter.displayName(for: child), name != excludedName {
+                return name
+            }
+            if let name = visibleChildDisplay(of: child, excluding: excludedName) {
+                return name
+            }
         }
         return nil
     }
