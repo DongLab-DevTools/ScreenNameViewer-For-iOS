@@ -30,6 +30,7 @@ final class OverlayManager {
             let overlay = ensureOverlay(for: windowScene, configuration: configuration)
             overlay.update(
                 vcDisplay: snapshot.vcDisplay,
+                childDisplay: snapshot.childDisplay,
                 introspectedDisplay: snapshot.introspectedDisplay,
                 routeName: routeName,
                 configuration: configuration

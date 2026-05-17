@@ -21,12 +21,14 @@ final class OverlayWindow: UIWindow {
 
     func update(
         vcDisplay: String?,
+        childDisplay: String?,
         introspectedDisplay: String?,
         routeName: String?,
         configuration: Configuration
     ) {
         overlayVC.update(
             vcDisplay: vcDisplay,
+            childDisplay: childDisplay,
             introspectedDisplay: introspectedDisplay,
             routeName: routeName,
             configuration: configuration

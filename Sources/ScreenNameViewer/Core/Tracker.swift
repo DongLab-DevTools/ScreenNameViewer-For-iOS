@@ -111,9 +111,15 @@ final class Tracker {
     struct DisplaySnapshot {
         let viewController: UIViewController?
         let vcDisplay: String?
+        let childDisplay: String?
         let introspectedDisplay: String?
 
-        static let empty = DisplaySnapshot(viewController: nil, vcDisplay: nil, introspectedDisplay: nil)
+        static let empty = DisplaySnapshot(
+            viewController: nil,
+            vcDisplay: nil,
+            childDisplay: nil,
+            introspectedDisplay: nil
+        )
     }
 
     /// 표시할 VC + 그 VC 의 라벨 텍스트들을 결정:
@@ -140,13 +146,30 @@ final class Tracker {
         DisplaySnapshot(
             viewController: vc,
             vcDisplay: VCNameFormatter.displayName(for: vc),
+            childDisplay: visibleChildDisplay(for: vc),
             introspectedDisplay: SwiftUIIntrospection.extractRootName(from: vc)
         )
     }
 
     private func makeNamedSnapshot(for vc: UIViewController) -> DisplaySnapshot? {
         let snap = makeSnapshot(for: vc)
-        return (snap.vcDisplay != nil || snap.introspectedDisplay != nil) ? snap : nil
+        return (snap.vcDisplay != nil || snap.childDisplay != nil || snap.introspectedDisplay != nil) ? snap : nil
+    }
+
+    /// 부모 VC 안에 임베드되어 화면에 떠 있는 첫 사용자 코드 child VC 의 이름
+    /// - `view.window != nil` — 현재 화면 계층에 실제로 붙어 있는 child 만
+    /// - `VCNameFormatter` 통과 — Apple framework 클래스 (예: `UIHostingController`) 는 자동 제외,
+    ///   사용자 정의 child 만 노출. UIHostingController 안의 SwiftUI View 는 `introspectedDisplay` 가 별도 처리.
+    /// - 중복 방지 — 부모 자신 이름과 같으면 무시
+    private func visibleChildDisplay(for parent: UIViewController) -> String? {
+        let parentName = VCNameFormatter.displayName(for: parent)
+        for child in parent.children {
+            guard child.viewIfLoaded?.window != nil else { continue }
+            guard let name = VCNameFormatter.displayName(for: child) else { continue }
+            if name == parentName { continue }
+            return name
+        }
+        return nil
     }
 }
 #endif

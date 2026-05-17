@@ -15,15 +15,17 @@ final class SceneOverlay {
     }
 
     /// Tracker 가 미리 계산해 넘긴 라벨을 그대로 오버레이 윈도우에 전달
-    /// — 라벨 결정 로직 (VCNameFormatter / SwiftUIIntrospection) 은 Tracker 측에서 한 번만 수행
+    /// — 라벨 결정 로직 (VCNameFormatter / SwiftUIIntrospection / child 탐색) 은 Tracker 측에서 한 번만 수행
     func update(
         vcDisplay: String?,
+        childDisplay: String?,
         introspectedDisplay: String?,
         routeName: String?,
         configuration: Configuration
     ) {
         window?.update(
             vcDisplay: vcDisplay,
+            childDisplay: childDisplay,
             introspectedDisplay: introspectedDisplay,
             routeName: routeName,
             configuration: configuration
