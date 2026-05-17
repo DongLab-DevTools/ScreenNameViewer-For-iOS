@@ -13,7 +13,10 @@
 ## 개요
 
 <!-- 샘플 이미지 자리 -->
-<!-- ![sample](.github/docs/images/screennameviewer-example.png) -->
+<img width="3000" alt="image" src="https://github.com/user-attachments/assets/84543cc6-74de-4bbe-bc4a-684171d0ffec" />
+
+<br>
+<br>
 
 ScreenNameViewer는 현재 표시 중인 화면의 클래스명을 오버레이로 보여주는 디버깅 도구입니다.
 어떤 화면이 활성화되어 있는지 직관적으로 확인할 수 있으며, SwiftUI 환경에서는 `NavigationStack` 라우트까지 함께 표시할 수 있습니다.
