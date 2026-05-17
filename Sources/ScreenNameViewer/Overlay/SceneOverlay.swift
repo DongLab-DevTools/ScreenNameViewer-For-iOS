@@ -14,29 +14,19 @@ final class SceneOverlay {
         window.isHidden = false
     }
 
-    func update(viewController: UIViewController?, routeName: String?, configuration: Configuration) {
-        let labels = viewController.map(resolveLabels(for:)) ?? Labels()
+    /// Tracker 가 미리 계산해 넘긴 라벨을 그대로 오버레이 윈도우에 전달
+    /// — 라벨 결정 로직 (VCNameFormatter / SwiftUIIntrospection) 은 Tracker 측에서 한 번만 수행
+    func update(
+        vcDisplay: String?,
+        introspectedDisplay: String?,
+        routeName: String?,
+        configuration: Configuration
+    ) {
         window?.update(
-            vcDisplay: labels.vcDisplay,
-            introspectedDisplay: labels.introspectedDisplay,
+            vcDisplay: vcDisplay,
+            introspectedDisplay: introspectedDisplay,
             routeName: routeName,
             configuration: configuration
-        )
-    }
-
-    private struct Labels {
-        var vcDisplay: String?
-        var introspectedDisplay: String?
-    }
-
-    /// 좌측 라벨 결정 — 두 라벨이 독립적으로 표시 여부 결정
-    /// - vcLabel: VCNameFormatter 가 검색 가능한 사용자 클래스명을 줄 때만
-    /// - introspectedLabel: SwiftUIIntrospection 이 안쪽 사용자 View 타입을 캐낼 때만
-    /// 라이브러리 정책: 표시되는 모든 라벨 텍스트는 사용자 프로젝트에서 grep 가능해야 함
-    private func resolveLabels(for vc: UIViewController) -> Labels {
-        Labels(
-            vcDisplay: VCNameFormatter.displayName(for: vc),
-            introspectedDisplay: SwiftUIIntrospection.extractRootName(from: vc)
         )
     }
 

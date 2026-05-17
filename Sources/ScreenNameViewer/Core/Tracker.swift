@@ -98,28 +98,55 @@ final class Tracker {
         renderScheduler.schedule { [weak self] in
             guard let self, self.isRunning else { return }
             let routeName = self.routes.current
+            let snapshot = self.resolveDisplay(routeName: routeName)
             self.overlays.render(
-                viewController: self.resolveDisplayVC(routeName: routeName),
+                snapshot: snapshot,
                 routeName: routeName,
                 configuration: self.configuration
             )
         }
     }
 
-    /// 표시할 VC 결정:
+    /// 라벨 한 세트 분량의 계산 결과 — 한 render 사이클에서 한 번만 계산해 모든 scene 의 오버레이에 공유
+    struct DisplaySnapshot {
+        let viewController: UIViewController?
+        let vcDisplay: String?
+        let introspectedDisplay: String?
+
+        static let empty = DisplaySnapshot(viewController: nil, vcDisplay: nil, introspectedDisplay: nil)
+    }
+
+    /// 표시할 VC + 그 VC 의 라벨 텍스트들을 결정:
     /// - route 가 설정된 상태(push 등 깊이 들어간 상태): top VC 만 사용. 그 밑으로 내려가면
     ///   잘못된 outer 화면(예: 루트 ContentView)이 노출되어 사용자 혼동.
     /// - route 없음(루트): top 이 표시 가능한 이름을 못 주면 스택을 내려가며 이름이 나오는
     ///   첫 VC 사용. 예: 루트에 SwiftUI NavigationStack 두면 top 이 SwiftUI 내부 호스트라
     ///   이름 못 주는데, 그 밑의 외곽 UIHostingController 의 introspection 으로 ContentView 노출.
-    private func resolveDisplayVC(routeName: String?) -> UIViewController? {
+    ///
+    /// snapshot 으로 라벨 값을 미리 담아 반환 — SceneOverlay 가 매 scene 마다 재계산하는 비용 제거
+    private func resolveDisplay(routeName: String?) -> DisplaySnapshot {
         if routeName != nil {
-            return vcStack.top
+            guard let top = vcStack.top else { return .empty }
+            return makeSnapshot(for: top)
         }
-        return vcStack.topMatching { vc in
-            VCNameFormatter.displayName(for: vc) != nil
-                || SwiftUIIntrospection.extractRootName(from: vc) != nil
-        } ?? vcStack.top
+        if let named = vcStack.topMap({ makeNamedSnapshot(for: $0) }) {
+            return named
+        }
+        guard let top = vcStack.top else { return .empty }
+        return makeSnapshot(for: top)
+    }
+
+    private func makeSnapshot(for vc: UIViewController) -> DisplaySnapshot {
+        DisplaySnapshot(
+            viewController: vc,
+            vcDisplay: VCNameFormatter.displayName(for: vc),
+            introspectedDisplay: SwiftUIIntrospection.extractRootName(from: vc)
+        )
+    }
+
+    private func makeNamedSnapshot(for vc: UIViewController) -> DisplaySnapshot? {
+        let snap = makeSnapshot(for: vc)
+        return (snap.vcDisplay != nil || snap.introspectedDisplay != nil) ? snap : nil
     }
 }
 #endif
