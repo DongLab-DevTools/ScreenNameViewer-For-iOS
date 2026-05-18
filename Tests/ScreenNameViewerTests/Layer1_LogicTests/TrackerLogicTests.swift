@@ -1,6 +1,7 @@
 #if DEBUG
 import XCTest
 import UIKit
+import SwiftUI
 @testable import ScreenNameViewer
 
 @MainActor
@@ -60,6 +61,14 @@ final class TrackerLogicTests: XCTestCase {
         let chrome = MockChromeViewController()
         parent.addChild(chrome)
         XCTAssertFalse(Tracker.isScreenLevel(chrome))
+    }
+
+    func testParentlessAppleHostIsNotScreenLevel() {
+        // 회귀: 셀이 UIHostingController 를 addChild 없이 contentView 에만 add 하는 케이스
+        // (Tving VaLineCell 패턴) — host.viewDidAppear 가 발생해도 push 되면 안 됨
+        let host = UIHostingController(rootView: Text("dummy"))
+        XCTAssertNil(host.parent)
+        XCTAssertFalse(Tracker.isScreenLevel(host))
     }
 
     // MARK: - findUserRoot

@@ -65,14 +65,20 @@ final class Tracker {
         scheduleRender()
     }
 
-    /// "화면 단위" VC 판정 — 두 조건 모두 만족해야 화면
+    /// "화면 단위" VC 판정 — 세 조건 모두 만족해야 화면
     /// 1. 자신이 컨테이너(`UINavigationController` 등) 가 아님 — 컨테이너 자체는 그 안의 visible child 가
     ///    실제 화면이므로 라벨에 적합하지 않음. 사용자 서브클래스 (`BaseNavigationController` 등) 도 차단
     /// 2. `parent` 가 없거나 (window root / modal) 표준 컨테이너 — 일반 VC 안에 박힌 child
     ///    (예: `UIHostingController` 를 임베드한 child VC) 는 부모 화면의 일부일 뿐이므로 제외
+    /// 3. `parent` 가 없는데 자신이 Apple framework class (`UIHostingController` 등) 면 셀/뷰 안에
+    ///    `addChild` 없이 임베드된 host 일 가능성이 큼 — 화면 단위로 보지 않음
     static func isScreenLevel(_ vc: UIViewController) -> Bool {
         if isContainer(vc) { return false }
-        guard let parent = vc.parent else { return true }
+        guard let parent = vc.parent else {
+            // 회귀: VaLineCell 처럼 셀이 UIHostingController 를 contentView 에만 add 하는 케이스 —
+            // host.viewDidAppear 가 호출되어도 push 되지 않도록 차단
+            return !FrameworkModules.isAppleFrameworkClass(type(of: vc))
+        }
         return isContainer(parent)
     }
 
