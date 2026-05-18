@@ -53,14 +53,14 @@ final class Tracker {
     }
 
     func handleViewDidAppear(_ vc: UIViewController) {
-        guard isRunning, !(vc is OverlayViewController) else { return }
+        guard isRunning else { return }
         guard Tracker.isScreenLevel(vc) else { return }
         vcStack.push(vc)
         scheduleRender()
     }
 
     func handleViewDidDisappear(_ vc: UIViewController) {
-        guard isRunning, !(vc is OverlayViewController) else { return }
+        guard isRunning else { return }
         vcStack.remove(vc)
         scheduleRender()
     }

@@ -366,18 +366,12 @@ classDiagram
         +tearDown()
     }
 
-    class OverlayWindow {
-        <<UIWindow>>
-        +update(...)
-        +handlePotentialLabelTap(at)
-        +hitTest()
-    }
-
-    class OverlayViewController {
-        <<UIViewController>>
+    class OverlayView {
+        <<UIView>>
         +update(...)
         +handlePotentialLabelTap(at)
         -showToast(text)
+        -point(inside, with): false
     }
 
     class AppWindowTapInstaller {
@@ -408,9 +402,7 @@ classDiagram
     OverlayManager *-- SceneOverlay
     OverlayManager *-- AppWindowTapInstaller
 
-    SceneOverlay *-- OverlayWindow
-
-    OverlayWindow *-- OverlayViewController
+    SceneOverlay *-- OverlayView
 ```
 
 **Notation**
