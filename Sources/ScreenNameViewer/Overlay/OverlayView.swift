@@ -1,8 +1,16 @@
 #if DEBUG
 import UIKit
 
+/// 호스트 앱 keyWindow 의 직접 subview 로 박혀 라벨 / 토스트를 그림
+///
+/// 별도 `UIWindow` 를 만들지 않는 이유 — 라이브러리 윈도우가 존재하면 iOS multi-window
+/// 회전 결정에 영향을 주어 호스트 앱의 회전 정책(잠금 / 수동 전체화면 등)이 어긋날 수 있음.
+/// 호스트 윈도우에 직접 주입하면 회전 정책 격리가 완벽함 — 라이브러리는 시각적 overlay 만 담당
+///
+/// 자기 영역은 터치 통과 (`point(inside:with:)` 항상 false) — 라벨 탭은 `AppWindowTapInstaller`
+/// 가 윈도우 레벨 제스처로 처리 후 좌표를 `handlePotentialLabelTap` 으로 전달
 @MainActor
-final class OverlayViewController: UIViewController {
+final class OverlayView: UIView {
 
     // 라벨들은 테스트에서 .text / .isHidden 확인 위해 internal — 외부 모듈에 노출되지는 않음
     let vcLabel = PaddedLabel()
@@ -17,69 +25,22 @@ final class OverlayViewController: UIViewController {
     private var verticalConstraints: [NSLayoutConstraint] = []
     private var lastAppliedVerticalPosition: Configuration.VerticalPosition?
 
-    override func loadView() {
-        let v = PassthroughView()
-        v.backgroundColor = .clear
-        view = v
+    init() {
+        super.init(frame: .zero)
+        backgroundColor = .clear
+        translatesAutoresizingMaskIntoConstraints = false
+        setupSubviews()
     }
 
-    deinit {
-        NotificationCenter.default.removeObserver(self)
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError() }
+
+    /// 모든 영역 터치 통과 — 라벨 탭은 윈도우 제스처로 별도 인식
+    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        return false
     }
 
-    // MARK: - Rotation
-
-    /// 회전 결정은 호스트 앱 윈도우의 top VC 정책에 위임
-    /// — 별도 윈도우인 OverlayWindow 가 기본값(`.allButUpsideDown` 등)으로 동작하면
-    /// 호스트 앱이 portrait 로 잠근 화면에서도 디바이스가 회전해버리는 회귀 발생
-    ///
-    /// fallback 은 **permissive** — `view.window` 가 nil 인 transient 상태
-    /// (첫 attach 전 / scene 전환 직후) 에서 OverlayWindow 가 호스트의 landscape
-    /// 허용을 막아버리지 않도록 `.all` / `true` 반환. 호스트 정책이 최종 결정자
-    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-        hostTopViewController()?.supportedInterfaceOrientations ?? .all
-    }
-
-    override var shouldAutorotate: Bool {
-        hostTopViewController()?.shouldAutorotate ?? true
-    }
-
-    override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
-        // OverlayVC 는 직접 present 하지 않으므로 이 값은 사실상 미사용
-        hostTopViewController()?.preferredInterfaceOrientationForPresentation ?? .portrait
-    }
-
-    /// 같은 scene 의 OverlayWindow 가 아닌 가장 적합한 앱 윈도우의 top VC 반환
-    /// keyWindow 우선, 없으면 첫 비-OverlayWindow
-    private func hostTopViewController() -> UIViewController? {
-        guard let scene = view.window?.windowScene else { return nil }
-        let appWindow = scene.windows.first(where: { !($0 is OverlayWindow) && $0.isKeyWindow })
-            ?? scene.windows.first(where: { !($0 is OverlayWindow) })
-        return appWindow?.rootViewController?._snv_topMostViewController()
-    }
-
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        // 호스트 앱이 동적으로 `supportedInterfaceOrientations` 답을 바꾸는 패턴(예: 플레이어
-        // 수동 전체화면) 에서, iOS 가 OverlayVC 의 답을 자동으로 재쿼리하지 않을 수 있음 —
-        // 디바이스 회전 노티를 받으면 self 도 재쿼리되도록 명시적으로 setNeedsUpdate.
-        // `UIDevice.beginGeneratingDeviceOrientationNotifications` 는 호출하지 않음 —
-        // 호스트 앱의 begin/end 균형을 깨뜨리지 않기 위함. 호스트가 이미 켜둔 경우만 동작
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleDeviceOrientationChange),
-            name: UIDevice.orientationDidChangeNotification,
-            object: nil
-        )
-    }
-
-    @objc private func handleDeviceOrientationChange() {
-        setNeedsUpdateOfSupportedInterfaceOrientations()
-    }
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-
+    private func setupSubviews() {
         for label in [vcLabel, childLabel, introspectedLabel, routeLabel] {
             label.setContentHuggingPriority(.defaultHigh, for: .horizontal)
             label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
@@ -93,16 +54,16 @@ final class OverlayViewController: UIViewController {
         leftLabelStack.addArrangedSubview(vcLabel)
         leftLabelStack.addArrangedSubview(childLabel)
         leftLabelStack.addArrangedSubview(introspectedLabel)
-        view.addSubview(leftLabelStack)
+        addSubview(leftLabelStack)
 
         routeLabel.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(routeLabel)
+        addSubview(routeLabel)
 
         toastLabel.translatesAutoresizingMaskIntoConstraints = false
         toastLabel.alpha = 0
-        view.addSubview(toastLabel)
+        addSubview(toastLabel)
 
-        let g = view.safeAreaLayoutGuide
+        let g = safeAreaLayoutGuide
 
         // 수평: stack 좌측 / route 우측
         NSLayoutConstraint.activate([
@@ -210,7 +171,7 @@ final class OverlayViewController: UIViewController {
         NSLayoutConstraint.deactivate(verticalConstraints)
         verticalConstraints.removeAll()
 
-        let g = view.safeAreaLayoutGuide
+        let g = safeAreaLayoutGuide
         var c: [NSLayoutConstraint] = []
 
         switch vertical {
@@ -224,14 +185,6 @@ final class OverlayViewController: UIViewController {
 
         NSLayoutConstraint.activate(c)
         verticalConstraints = c
-    }
-}
-
-@MainActor
-private final class PassthroughView: UIView {
-    /// 모든 영역 미터치 — 오버레이 윈도우의 hitTest와 함께 완전 통과
-    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
-        return false
     }
 }
 
