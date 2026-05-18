@@ -68,8 +68,9 @@ Add to your target's dependencies:
 
 ### Requirements
 
-- iOS 16.0 or higher
-- Swift 5.9 or higher (Xcode 15+)
+- iOS 16.0+ deployment target
+- Xcode 15+ (Swift 5.9 toolchain)
+- The consumer project's Swift source version is not constrained — Swift 5.0 and above are supported.
 
 <br>
 
@@ -292,12 +293,21 @@ classDiagram
         +removeRoute(id)
     }
 
+    class DisplaySnapshot {
+        <<struct>>
+        +viewController: UIViewController?
+        +vcDisplay: String?
+        +childDisplay: String?
+        +introspectedDisplay: String?
+    }
+
     class VCStack {
         <<struct>>
         -entries: WeakVC[]
         +push(vc)
         +remove(vc)
         +top: UIViewController?
+        +topMap(transform)
     }
 
     class RouteRegistry {
@@ -321,25 +331,30 @@ classDiagram
 
     class VCNameFormatter {
         <<enum>>
-        +names(for: vc)$ Names?
+        +displayName(for: vc)$ String?
     }
 
-    class Names {
-        <<struct>>
-        +display: String
-        +full: String
+    class SwiftUIIntrospection {
+        <<enum>>
+        +extractRootName(from: vc)$ String?
+    }
+
+    class FrameworkModules {
+        <<enum>>
+        +names: Set~String~$
+        +isAppleFrameworkClass(cls)$ Bool
     }
 
     class OverlayManager {
         <<MainActor>>
-        +render(vc, route, config)
+        +render(snapshot, route, config)
         +removeAll()
         +topVisibleViewController(in)$
     }
 
     class SceneOverlay {
         <<MainActor>>
-        +update(vc, route, config)
+        +update(vcDisplay, childDisplay, introspectedDisplay, route, config)
         +handlePotentialLabelTap(at, fromWindow)
         +tearDown()
     }
@@ -365,7 +380,7 @@ classDiagram
     }
 
     Configuration *-- LabelStyle
-    VCNameFormatter ..> Names
+    Tracker *-- DisplaySnapshot
 
     ScreenNameViewer ..> Tracker
     TrackScreenNameModifier ..> Tracker
@@ -377,12 +392,16 @@ classDiagram
     Tracker *-- RenderScheduler
     Tracker *-- OverlayManager
     Tracker ..> Swizzler
+    Tracker ..> VCNameFormatter
+    Tracker ..> SwiftUIIntrospection
+
+    VCNameFormatter ..> FrameworkModules
+    SwiftUIIntrospection ..> FrameworkModules
 
     OverlayManager *-- SceneOverlay
     OverlayManager *-- AppWindowTapInstaller
 
     SceneOverlay *-- OverlayWindow
-    SceneOverlay ..> VCNameFormatter
 
     OverlayWindow *-- OverlayViewController
 ```
