@@ -100,7 +100,7 @@ final class OverlayManager {
     }
 }
 
-private extension UIViewController {
+extension UIViewController {
 
     /// `maxDepth` 는 UIKit 이 사이클을 허용하지 않지만 호스트 앱 버그로 presented 체인이
     /// 순환할 경우 무한 재귀로 라이브러리가 크래시 내는 걸 방지하는 방어선

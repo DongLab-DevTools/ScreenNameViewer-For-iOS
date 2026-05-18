@@ -88,5 +88,15 @@ final class OverlayViewControllerTests: XCTestCase {
         XCTAssertTrue(vc.introspectedLabel.isHidden)
         XCTAssertTrue(vc.routeLabel.isHidden)
     }
+
+    // MARK: - Rotation policy
+
+    func testOrientationFallbackToPortraitWhenNoHostWindow() {
+        // OverlayVC 가 window 에 안 붙은 상태 — hostTopViewController() nil → portrait 로 보수적 fallback
+        // 호스트 앱 회전 잠금을 우회하지 않도록 보장
+        XCTAssertEqual(vc.supportedInterfaceOrientations, .portrait)
+        XCTAssertFalse(vc.shouldAutorotate)
+        XCTAssertEqual(vc.preferredInterfaceOrientationForPresentation, .portrait)
+    }
 }
 #endif
