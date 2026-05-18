@@ -28,15 +28,20 @@ final class OverlayViewController: UIViewController {
     /// 회전 결정은 호스트 앱 윈도우의 top VC 정책에 위임
     /// — 별도 윈도우인 OverlayWindow 가 기본값(`.allButUpsideDown` 등)으로 동작하면
     /// 호스트 앱이 portrait 로 잠근 화면에서도 디바이스가 회전해버리는 회귀 발생
+    ///
+    /// fallback 은 **permissive** — `view.window` 가 nil 인 transient 상태
+    /// (첫 attach 전 / scene 전환 직후) 에서 OverlayWindow 가 호스트의 landscape
+    /// 허용을 막아버리지 않도록 `.all` / `true` 반환. 호스트 정책이 최종 결정자
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-        hostTopViewController()?.supportedInterfaceOrientations ?? .portrait
+        hostTopViewController()?.supportedInterfaceOrientations ?? .all
     }
 
     override var shouldAutorotate: Bool {
-        hostTopViewController()?.shouldAutorotate ?? false
+        hostTopViewController()?.shouldAutorotate ?? true
     }
 
     override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
+        // OverlayVC 는 직접 present 하지 않으므로 이 값은 사실상 미사용
         hostTopViewController()?.preferredInterfaceOrientationForPresentation ?? .portrait
     }
 
