@@ -23,6 +23,32 @@ final class OverlayViewController: UIViewController {
         view = v
     }
 
+    // MARK: - Rotation
+
+    /// 회전 결정은 호스트 앱 윈도우의 top VC 정책에 위임
+    /// — 별도 윈도우인 OverlayWindow 가 기본값(`.allButUpsideDown` 등)으로 동작하면
+    /// 호스트 앱이 portrait 로 잠근 화면에서도 디바이스가 회전해버리는 회귀 발생
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        hostTopViewController()?.supportedInterfaceOrientations ?? .portrait
+    }
+
+    override var shouldAutorotate: Bool {
+        hostTopViewController()?.shouldAutorotate ?? false
+    }
+
+    override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
+        hostTopViewController()?.preferredInterfaceOrientationForPresentation ?? .portrait
+    }
+
+    /// 같은 scene 의 OverlayWindow 가 아닌 가장 적합한 앱 윈도우의 top VC 반환
+    /// keyWindow 우선, 없으면 첫 비-OverlayWindow
+    private func hostTopViewController() -> UIViewController? {
+        guard let scene = view.window?.windowScene else { return nil }
+        let appWindow = scene.windows.first(where: { !($0 is OverlayWindow) && $0.isKeyWindow })
+            ?? scene.windows.first(where: { !($0 is OverlayWindow) })
+        return appWindow?.rootViewController?._snv_topMostViewController()
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
