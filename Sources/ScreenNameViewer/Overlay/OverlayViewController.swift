@@ -23,6 +23,10 @@ final class OverlayViewController: UIViewController {
         view = v
     }
 
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
     // MARK: - Rotation
 
     /// 회전 결정은 호스트 앱 윈도우의 top VC 정책에 위임
@@ -52,6 +56,25 @@ final class OverlayViewController: UIViewController {
         let appWindow = scene.windows.first(where: { !($0 is OverlayWindow) && $0.isKeyWindow })
             ?? scene.windows.first(where: { !($0 is OverlayWindow) })
         return appWindow?.rootViewController?._snv_topMostViewController()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // 호스트 앱이 동적으로 `supportedInterfaceOrientations` 답을 바꾸는 패턴(예: 플레이어
+        // 수동 전체화면) 에서, iOS 가 OverlayVC 의 답을 자동으로 재쿼리하지 않을 수 있음 —
+        // 디바이스 회전 노티를 받으면 self 도 재쿼리되도록 명시적으로 setNeedsUpdate.
+        // `UIDevice.beginGeneratingDeviceOrientationNotifications` 는 호출하지 않음 —
+        // 호스트 앱의 begin/end 균형을 깨뜨리지 않기 위함. 호스트가 이미 켜둔 경우만 동작
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleDeviceOrientationChange),
+            name: UIDevice.orientationDidChangeNotification,
+            object: nil
+        )
+    }
+
+    @objc private func handleDeviceOrientationChange() {
+        setNeedsUpdateOfSupportedInterfaceOrientations()
     }
 
     override func viewDidLoad() {

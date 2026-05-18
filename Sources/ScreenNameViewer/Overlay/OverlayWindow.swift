@@ -8,7 +8,11 @@ final class OverlayWindow: UIWindow {
 
     init(scene: UIWindowScene) {
         super.init(windowScene: scene)
-        windowLevel = .alert + 1
+        // `.normal + 1` — 호스트 앱 메인 윈도우 바로 위에만 뜨도록.
+        // `.alert + 1` 처럼 너무 높게 두면 iOS 16+ scene 회전 결정에 라이브러리 윈도우가
+        // 영향을 끼쳐 호스트의 회전 정책(예: 플레이어 수동 전체화면)이 어긋날 수 있음.
+        // 키보드 / 시스템 alert 아래로 깔리는 트레이드오프 — 디버그 라벨이라 허용
+        windowLevel = .normal + 1
         isUserInteractionEnabled = false
         backgroundColor = .clear
         rootViewController = overlayVC
