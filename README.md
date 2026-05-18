@@ -75,7 +75,15 @@ Add to your target's dependencies:
 
 ### UIKit
 
-Call `ScreenNameViewer.start()` once in your `AppDelegate`. Every `UIViewController` is then automatically tracked via method swizzling — no further code changes needed.
+Call `ScreenNameViewer.install()` once in your `AppDelegate`. Every `UIViewController` is then automatically tracked via method swizzling — no further code changes needed.
+
+This is a **one-shot setup at app launch** — not a runtime on/off. To toggle the debug overlay from user settings, pass the toggle value via `enabled`; the new value takes effect after an app restart.
+
+```swift
+ScreenNameViewer.install(
+    enabled: UserDefaults.standard.bool(forKey: "debug_overlay_enabled")
+)
+```
 
 ```swift
 import UIKit
@@ -87,7 +95,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
-        ScreenNameViewer.start()
+        ScreenNameViewer.install()
         return true
     }
 }
@@ -108,7 +116,7 @@ import ScreenNameViewer
 @main
 struct MyApp: App {
     init() {
-        ScreenNameViewer.start()
+        ScreenNameViewer.install()
     }
 
     var body: some Scene {
@@ -184,10 +192,10 @@ Stack-friendly — when a sheet is on screen, its name takes precedence; on dism
 
 ### Configuration
 
-Customize the overlay appearance via `start { config in ... }`:
+Customize the overlay appearance via `install { config in ... }`:
 
 ```swift
-ScreenNameViewer.start { config in
+ScreenNameViewer.install { config in
     // Left label — UIViewController name
     config.viewController.textColor = .white
     config.viewController.backgroundColor = UIColor.black.withAlphaComponent(0.7)
@@ -253,8 +261,7 @@ classDiagram
 
     class ScreenNameViewer {
         <<enum>>
-        +start(configure)$
-        +stop()$
+        +install(enabled, configure)$
     }
 
     class Configuration {

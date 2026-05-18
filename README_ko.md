@@ -75,7 +75,15 @@ dependencies: [
 
 ### UIKit
 
-`AppDelegate`에서 `ScreenNameViewer.start()` 한 번만 호출하면 모든 `UIViewController`가 method swizzling으로 자동 추적됩니다. 추가 코드 작업은 필요 없습니다.
+`AppDelegate`에서 `ScreenNameViewer.install()` 한 번만 호출하면 모든 `UIViewController`가 method swizzling으로 자동 추적됩니다. 추가 코드 작업은 필요 없습니다.
+
+런타임 on/off가 아닌 **앱 부팅 시 1회 호출** 모델입니다. 사용자 설정으로 디버그 오버레이를 토글하려면 `enabled` 파라미터로 주입하세요 — 토글 변경 후 앱을 재시작하면 새 값이 적용됩니다.
+
+```swift
+ScreenNameViewer.install(
+    enabled: UserDefaults.standard.bool(forKey: "debug_overlay_enabled")
+)
+```
 
 ```swift
 import UIKit
@@ -87,7 +95,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
-        ScreenNameViewer.start()
+        ScreenNameViewer.install()
         return true
     }
 }
@@ -108,7 +116,7 @@ import ScreenNameViewer
 @main
 struct MyApp: App {
     init() {
-        ScreenNameViewer.start()
+        ScreenNameViewer.install()
     }
 
     var body: some Scene {
@@ -184,10 +192,10 @@ TabView {
 
 ### Configuration
 
-`start { config in ... }`로 외형 커스터마이징:
+`install { config in ... }`로 외형 커스터마이징:
 
 ```swift
-ScreenNameViewer.start { config in
+ScreenNameViewer.install { config in
     // 좌측 라벨 — UIViewController 이름
     config.viewController.textColor = .white
     config.viewController.backgroundColor = UIColor.black.withAlphaComponent(0.7)
@@ -253,8 +261,7 @@ classDiagram
 
     class ScreenNameViewer {
         <<enum>>
-        +start(configure)$
-        +stop()$
+        +install(enabled, configure)$
     }
 
     class Configuration {
