@@ -234,31 +234,29 @@ ScreenNameViewer.install { config in
 
 ## 동작 원리
 
-ScreenNameViewer는 앱 화면 위에 디버깅용 오버레이를 띄우고, 현재 화면 정보를 좌우 라벨에 표시합니다.
+ScreenNameViewer는 현재 화면 정보를 추적하고, 이를 디버깅용 라벨로 앱 화면에 표시합니다.
 
-좌측 라벨에는 현재 화면의 UIKit / SwiftUI View 이름이 표시됩니다.
+**좌측 라벨**
+   - 현재 화면의 UIKit / SwiftUI View 이름이 표시됩니다.
 
-우측 라벨에는 SwiftUI `NavigationStack`의 현재 Route 이름이 표시됩니다.
+**우측 라벨**
+   - SwiftUI `NavigationStack`의 현재 Route 이름이 표시됩니다.
 
 <br>
 
 ### UIKit / SwiftUI View 이름
 
-`UIViewController`의 `viewDidAppear / viewDidDisappear` 호출 시점에 추적 로직을 함께 실행하도록 연결하여 현재 보이는 `UIViewController`를 추적합니다.
-
-이후 클래스명에서 generic / module prefix를 정리하고, 사용자 코드에서 찾기 쉬운 이름만 좌측 라벨에 표시합니다.
-
-SwiftUI 화면은 `UIHostingController`를 통해 호스팅되므로, 내부 SwiftUI View 이름을 추출해 좌측 라벨에 표시합니다.
+- `UIViewController`의 `viewDidAppear / viewDidDisappear` 호출 시점에 추적 로직을 함께 실행하도록 연결하여 현재 보이는 `UIViewController`를 추적합니다.
+- 이후 클래스명에서 generic / module prefix를 정리하고, 사용자 코드에서 찾기 쉬운 이름만 좌측 라벨에 표시합니다.
+- SwiftUI 화면은 `UIHostingController`를 통해 호스팅되므로, 내부 SwiftUI View 이름을 추출해 좌측 라벨에 표시합니다.
 
 <br>
 
 ### SwiftUI Route
 
-SwiftUI Route는 `NavigationStack`에 `.trackScreenName(path:)`를 선언하여 추적합니다.
-
-`path`가 변경되면 SwiftUI가 View를 다시 그리고, 새 `path.last` 기준으로 Route 이름이 갱신됩니다.
-
-갱신된 Route 이름은 우측 라벨에 표시됩니다.
+- SwiftUI Route는 `NavigationStack`에 `.trackScreenName(path:)`를 선언하여 추적합니다.
+- `path`가 변경되면 SwiftUI가 View를 다시 그리고, 새 `path.last` 기준으로 Route 이름이 갱신됩니다.
+- 갱신된 Route 이름은 우측 라벨에 표시됩니다.
 
 <br>
 
