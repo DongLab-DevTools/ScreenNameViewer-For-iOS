@@ -1,40 +1,36 @@
 # ScreenNameViewer-For-iOS
-[![Platform](https://img.shields.io/badge/platform-iOS-000000?style=flat-square&logo=apple)](https://developer.apple.com/ios)
+
 [![Hits](https://myhits.vercel.app/api/hit/https%3A%2F%2Fgithub.com%2FDongLab-DevTools%2FScreenNameViewer-For-iOS%3Ftab%3Dreadme-ov-file?color=blue&label=hits&size=small)](https://myhits.vercel.app)
-![GitHub stars](https://img.shields.io/github/stars/DongLab-DevTools/ScreenNameViewer-For-iOS.svg)
-
-
-[![Release](https://img.shields.io/github/v/release/DongLab-DevTools/ScreenNameViewer-For-iOS?style=flat-square&color=blue)](https://github.com/DongLab-DevTools/ScreenNameViewer-For-iOS/releases)
-[![SPM](https://img.shields.io/badge/SPM-compatible-brightgreen?style=flat-square)](https://swift.org/package-manager/)
+[![Platform](https://img.shields.io/badge/platform-iOS-000000?style=flat-square&logo=apple)](https://developer.apple.com/ios)
 [![iOS](https://img.shields.io/badge/iOS-16.0%2B-blue?style=flat-square)](https://developer.apple.com/ios)
 [![Swift](https://img.shields.io/badge/Swift-5.9%2B-orange?style=flat-square&logo=swift)](https://swift.org)
-
+[![SPM](https://img.shields.io/badge/SPM-compatible-brightgreen?style=flat-square)](https://swift.org/package-manager/)
+![GitHub stars](https://img.shields.io/github/stars/DongLab-DevTools/ScreenNameViewer-For-iOS.svg)
 
 **[한국어 README](./README_ko.md)**
 
 ## Overview
 
 <!-- Sample image placeholder -->
-<img width="3000" alt="image" src="https://github.com/user-attachments/assets/84543cc6-74de-4bbe-bc4a-684171d0ffec" />
+<!-- ![sample](.github/docs/images/screennameviewer-example.png) -->
 
-<br>
-<br>
+ScreenNameViewer is a debugging tool that displays the name of the currently visible screen as an overlay.
 
-ScreenNameViewer is a debugging tool that overlays the class name of the currently displayed screen.
-It allows you to intuitively check which screen is active, and in a SwiftUI environment, it can also display the `NavigationStack` route.
+In UIKit, it shows the currently visible `UIViewController` name.  
+In SwiftUI, it can also show the current `NavigationStack` Route name.
 
-This allows you to quickly find and navigate to the code for the desired screen, improving both debugging and development efficiency.
+This helps you quickly identify which file the current screen is defined in, improving debugging and development efficiency.
 
 <br>
 
 ## Features
 
-- **Real-time class name display**: Shows `UIViewController` class names and `NavigationStack` route on screen in real-time
-- **Automatic lifecycle tracking**: Automatically tracks all `UIViewController`s using method swizzling at the application level
-- **Debug-only**: All internal code wrapped in `#if DEBUG` — automatically disabled in RELEASE builds with zero runtime cost
-- **UI customization**: Freely configure text size, color, vertical position, etc.
+- **Real-time screen name display**: Shows the current `UIViewController` name and SwiftUI `NavigationStack` Route in real time
+- **Automatic lifecycle tracking**: Tracks the current screen based on the `UIViewController` lifecycle
+- **DEBUG only**: Internal code is wrapped in `#if DEBUG`, so it is automatically disabled in RELEASE builds — zero runtime cost
+- **UI customization**: Customize text size, color, vertical position, and more
 - **Memory safe**: Prevents memory leaks using weak references and automatic cleanup
-- **Touch interaction**: Tap label to display full class name in toast — non-label areas pass through, never blocking the underlying app
+- **Touch interaction**: Tap a label to show the full name in a toast. Non-label areas pass through and never block the underlying app
 - **Both SwiftUI and UIKit**: One library covers both frameworks
 
 <br>
@@ -43,13 +39,13 @@ This allows you to quickly find and navigate to the code for the desired screen,
 
 ### Swift Package Manager
 
-In Xcode, `File → Add Package Dependencies...` and enter:
+In Xcode, open `File → Add Package Dependencies...` and enter:
 
-```
+```swift
 https://github.com/DongLab-DevTools/ScreenNameViewer-For-iOS
 ```
 
-Or add directly to `Package.swift`:
+Or add it directly to `Package.swift`:
 
 ```swift
 dependencies: [
@@ -57,7 +53,7 @@ dependencies: [
 ]
 ```
 
-Add to your target's dependencies:
+Add it to your target dependencies:
 
 ```swift
 .target(
@@ -70,9 +66,9 @@ Add to your target's dependencies:
 
 ### Requirements
 
-- iOS 16.0+ deployment target
-- Xcode 15+ (Swift 5.9 toolchain)
-- The consumer project's Swift source version is not constrained — Swift 5.0 and above are supported.
+- iOS 16.0 or higher deployment target
+- Xcode 15 or higher
+- Swift 5.9 or higher
 
 <br>
 
@@ -80,15 +76,8 @@ Add to your target's dependencies:
 
 ### UIKit
 
-Call `ScreenNameViewer.install()` once in your `AppDelegate`. Every `UIViewController` is then automatically tracked via method swizzling — no further code changes needed.
-
-This is a **one-shot setup at app launch** — not a runtime on/off. To toggle the debug overlay from user settings, pass the toggle value via `enabled`; the new value takes effect after an app restart.
-
-```swift
-ScreenNameViewer.install(
-    enabled: UserDefaults.standard.bool(forKey: "debug_overlay_enabled")
-)
-```
+- Call `ScreenNameViewer.install()` in `AppDelegate`.
+- The class name of the currently visible `UIViewController` is automatically shown on the left label.
 
 ```swift
 import UIKit
@@ -106,13 +95,13 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 }
 ```
 
-The left label automatically displays the class name of the currently visible `UIViewController`.
-
 <br>
 
 ### SwiftUI
 
 #### 1. Initialize at the App entry point
+
+- If your app uses the SwiftUI App lifecycle, call `ScreenNameViewer.install()` in `App.init()`.
 
 ```swift
 import SwiftUI
@@ -132,11 +121,12 @@ struct MyApp: App {
 }
 ```
 
-This alone tracks every screen, but SwiftUI views are hosted by `UIHostingController` whose class name is filtered out as framework noise. To show meaningful names for SwiftUI screens, add the modifiers below.
+<br>
 
-#### 2. Track NavigationStack routes
+#### 2. Track NavigationStack Route
 
-Apply once on the root `NavigationStack`. Push/pop transitions automatically update the right label.
+- Initialization alone enables current screen tracking.
+- To display the `NavigationStack` Route name in SwiftUI, add the modifier below. The right label is automatically updated on push/pop.
 
 ```swift
 struct ContentView: View {
@@ -151,7 +141,13 @@ struct ContentView: View {
 }
 ```
 
-When `NavigationStack` has no path but uses `NavigationLink(value:)`, use the wrapper instead of `navigationDestination`. It receives the destination value and builds the screen name automatically.
+<br>
+
+#### 3. When NavigationStack has no path
+
+- If you use `NavigationLink(value:)` without a path on `NavigationStack`, automatic tracking is not possible.
+- In this case, you can use the wrapper instead of `navigationDestination`.
+- It automatically generates a screen name based on the value received by the destination closure.
 
 ```swift
 NavigationStack {
@@ -165,11 +161,14 @@ NavigationStack {
 }
 ```
 
-Overlay example: `ContentView.swift : value: 1`
+- Display example: `ContentView.swift : value: 1`
 
-#### 3. Sheet / Tab / Cover — explicit tracking
+<br>
 
-For screens outside the NavigationStack path, declare the name explicitly:
+#### 4. Sheet / Tab / Cover — Explicit Route
+
+- Screens outside the `NavigationStack` path cannot be tracked automatically.
+- In this case, you can explicitly declare a name with `.trackScreenName("ScreenName")` as needed.
 
 ```swift
 .sheet(isPresented: $showSheet) {
@@ -189,15 +188,13 @@ TabView {
 }
 ```
 
-Stack-friendly — when a sheet is on screen, its name takes precedence; on dismissal the previous value is automatically restored.
-
 <br>
 
 ## Configuration
 
 ### Configuration
 
-Customize the overlay appearance via `install { config in ... }`:
+You can customize the overlay style with `install { config in ... }`.
 
 ```swift
 ScreenNameViewer.install { config in
@@ -207,12 +204,13 @@ ScreenNameViewer.install { config in
     config.viewController.textSize = 12
     config.viewController.enabled = true
 
-    // Right label — NavigationStack route
+    // Right label — NavigationStack Route
     config.route.textColor = .systemYellow
     config.route.backgroundColor = UIColor.black.withAlphaComponent(0.7)
     config.route.textSize = 12
 
-    // Vertical position (top / bottom). Horizontal placement is fixed (left/right).
+    // Vertical position: top / bottom
+    // Horizontal placement is fixed: left(viewController) / right(route)
     config.verticalPosition = .top
 }
 ```
@@ -230,31 +228,68 @@ ScreenNameViewer.install { config in
   - `cornerRadius`: Corner radius
 
 - **verticalPosition**: Vertical position of the overlay (`.top` / `.bottom`)
-  Horizontal position is fixed: viewController on the left, route on the right
+  - Horizontal placement is fixed: left(viewController) / right(route)
 
 <br>
 
 ## How it works
 
-The name shown in the overlay is normalized to always be a symbol from the user's own codebase:
+ScreenNameViewer tracks the current screen information and displays it as debugging labels in the app screen.
 
-1. `String(describing: type(of: vc))` → full name (e.g., `MyApp.HomeViewController`, `UIHostingController<...>`)
-2. Strip generic `<...>` parameters → `UIHostingController`
-3. Strip module prefix → `HomeViewController`
-4. Returns `nil` if the result is an Apple framework base class (`UIViewController`, `UINavigationController`, `UITabBarController`, `UIHostingController`, etc.) — the label is auto-hidden
+**Left label**
+   - Displays the current UIKit / SwiftUI View name.
 
-→ The text shown in the overlay is always grep-able. Use `Open Quickly` (⇧⌘O) or grep to jump straight to the file.
+**Right label**
+   - Displays the current Route name of SwiftUI `NavigationStack`.
+
+<br>
+
+### UIKit / SwiftUI View name
+
+- ScreenNameViewer hooks tracking logic into the `viewDidAppear / viewDidDisappear` call timing of `UIViewController` to track the currently visible `UIViewController`.
+- It then removes generic / module prefixes from the class name and displays a name that is easy to find in user code on the left label.
+- SwiftUI screens are hosted through `UIHostingController`, so ScreenNameViewer extracts the inner SwiftUI View name and displays it on the left label.
+
+<br>
+
+### SwiftUI Route
+
+- SwiftUI Route tracking is enabled by declaring `.trackScreenName(path:)` on `NavigationStack`.
+- When `path` changes, SwiftUI recomputes the View, and the Route name is updated based on the new `path.last`.
+- The updated Route name is displayed on the right label.
+
+<br>
+
+### Name normalization
+
+Names shown in the overlay are normalized so they can be searched directly in user code.
+
+1. Get the full name with `String(describing: type(of: vc))`  
+   Example: `MyApp.HomeViewController`, `UIHostingController<...>`
+
+2. Remove generic `<...>` parts  
+   Example: `UIHostingController<ContentView>` → `UIHostingController`
+
+3. Remove module prefixes  
+   Example: `MyApp.HomeViewController` → `HomeViewController`
+
+4. Filter Apple framework base classes  
+   Example: `UIViewController`, `UINavigationController`, `UITabBarController`, `UIHostingController`
+
+<br>
+
+→ The name shown on screen can be found immediately with grep or Xcode `Open Quickly`(⇧⌘O).
 
 <br>
 
 ## Sample app
 
-A demo app is included in the repository:
+A demo app is included in the repository.
 
 - **SwiftUI**: Basic / Deep Navigation / Sheet / Full-Screen Cover / TabView
 - **UIKit**: `UINavigationController` / `UITabBarController` / Modal / Container ViewController
 
-Open `ScreenNameViewer-For-iOS.xcodeproj` and run to see the library in action across each case.
+Open `ScreenNameViewer-For-iOS.xcodeproj` and run it to see how the library works in each case.
 
 <br>
 
@@ -409,10 +444,12 @@ classDiagram
 
 **Notation**
 
-- `*--` composition (the parent owns the child instance directly)
-- `..>` dependency (calls only, no ownership)
-- `<<...>>` stereotype (struct / enum / MainActor class / UIWindow, etc.)
-- `+` public, `-` private, `$` static
+- `*--` composition: the parent directly owns the child instance
+- `..>` dependency: calls only, no ownership
+- `<<...>>` stereotype: struct / enum / MainActor class / ViewModifier, etc.
+- `+` public
+- `-` private
+- `$` static
 
 <br>
 
